@@ -64,4 +64,12 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+    /**
+     * obtener información de proveedor de inicio de session 
+     */
+
+    public function authProviders()
+    {
+        return $this->hasMany(AuthProvider::class);
+    }
 }
