@@ -8,7 +8,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\PasswordGenerated;
+use App\Mail\PasswordGeneratedMail;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 
@@ -30,7 +30,7 @@ class SocialiteAuthController extends Controller
             $plainPassword = Str::password(12); // 12 caracteres con combinación de letras, números y símbolos
             
             // Enviar correo con la contraseña en texto plano
-            //Mail::to($providerUser->getEmail())->send(new PasswordGenerated($plainPassword));
+            Mail::to($providerUser->getEmail())->send(new PasswordGeneratedMail($plainPassword));
 
             $user = User::create([
                 'email' => $providerUser->getEmail(),
