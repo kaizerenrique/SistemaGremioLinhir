@@ -8,3 +8,4 @@ Este proyecto busca ofrecer una plataforma de soporte para las actividades del g
 
 ## Autores ✒️
 * [kaizerenrique](https://github.com/kaizerenrique)
+* [Mayker451](https://github.com/michaelsandino)
