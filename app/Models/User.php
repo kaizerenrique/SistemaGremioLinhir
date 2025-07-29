@@ -64,12 +64,25 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+    
     /**
-     * obtener información de proveedor de inicio de session 
+     * Relación entre el usuario y los  
+     * datos de proveedor de servicio.
+     * 
+     * Relación de uno a muchos para 
+     * poder recuperar los datos de 
+     * inicio con distintos proveedores.
      */
-
     public function authProviders()
     {
         return $this->hasMany(AuthProvider::class);
+    }
+
+    /**
+     * Personajes del juego
+     */
+    public function personajes()
+    {
+        return $this->hasMany(Personaje::class);
     }
 }
