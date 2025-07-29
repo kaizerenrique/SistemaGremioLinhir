@@ -6,8 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
-use App\Models\PersonajeAlbion;
-use App\Models\EstadisticaAlbion;
+use App\Models\Personaje;
 use Carbon\Carbon;
 
 trait Albion 
@@ -150,7 +149,7 @@ trait Albion
         }
 	}
     
-    /**
+	/**
 	* Esta función realiza una consulta a la Pagina del gameinfo.albiononline 
     * para buscar información de los integrantes de linhir
 	* 
@@ -174,7 +173,7 @@ trait Albion
 			$idsIntegrantesActuales = collect($integrantes)->pluck('Id')->toArray();
 
 			// Obtener todos los personajes registrados en la base de datos que pertenecen al gremio
-			$personajesRegistrados = PersonajeAlbion::where('GuildId', $linhir_id)->get();
+			$personajesRegistrados = Personaje::where('GuildId', $linhir_id)->get();
 
 			// Marcar como "no miembro" y actualizar el GuildId de los personajes que ya no están en el gremio
 			foreach ($personajesRegistrados as $personaje) {
@@ -203,7 +202,7 @@ trait Albion
 	
 			// Registrar nuevos miembros o actualizar los existentes
 			foreach ($integrantes as $integrante) {
-				PersonajeAlbion::updateOrCreate(
+				Personaje::updateOrCreate(
 					['Id_albion' => $integrante->Id],
 					[
 						'Name' => $integrante->Name,
@@ -211,8 +210,6 @@ trait Albion
 						'miembro' => true,
 					]
 				);
-
-				$this->guardarEstadisticasDiarias($personaje->id);
 			}
 	
 			return true;
@@ -228,51 +225,96 @@ trait Albion
 	 * Esta función realiza una consulta a la Pagina del gameinfo.albiononline
 	 * para buscar información de los personajes registrados
 	 */
-	private function guardarEstadisticasDiarias($personajeId)
+
+	public function datospersonaje()
 	{
-		$personaje = PersonajeAlbion::find($personajeId);
-		if (!$personaje) return;
+		$personajesRegistrados = Personaje::all();
 
-		try {
-			$urlPlayer = 'https://gameinfo.albiononline.com/api/gameinfo/players/' . $personaje->Id_albion;
-			$responsePlayer = Http::retry(3, 500)->get($urlPlayer);
+		foreach ($personajesRegistrados as $personajesRegistrado)
+		{
+			// Buscar información actual del personaje en la API
+			$urlPersonaje = 'https://gameinfo.albiononline.com/api/gameinfo/players/' . $personajesRegistrado->Id_albion;
+			$responsePersonaje = Http::get($urlPersonaje);
 
-			if ($responsePlayer->successful()) {
-				$playerData = $responsePlayer->json();
-				$stats = $playerData['LifetimeStatistics'] ?? null;
-				
-				if ($stats) {
-					// Verificar si ya existe registro hoy
-					$existing = EstadisticaAlbion::where('personaje_albion_id', $personajeId)
-						->whereDate('fecha_registro', today())
-						->exists();
-					
-					if (!$existing) {
-						EstadisticaAlbion::create([
-							'personaje_albion_id' => $personajeId,
-							'pve_total' => $stats['PvE']['Total'] ?? 0,
-							'pve_royal' => $stats['PvE']['Royal'] ?? 0,
-							'pve_outlands' => $stats['PvE']['Outlands'] ?? 0,
-							'pve_avalon' => $stats['PvE']['Avalon'] ?? 0,
-							'gathering_total' => $stats['Gathering']['All']['Total'] ?? 0,
-							'gathering_fiber' => $stats['Gathering']['Fiber']['Total'] ?? 0,
-							'gathering_hide' => $stats['Gathering']['Hide']['Total'] ?? 0,
-							'gathering_ore' => $stats['Gathering']['Ore']['Total'] ?? 0,
-							'gathering_rock' => $stats['Gathering']['Rock']['Total'] ?? 0,
-							'gathering_wood' => $stats['Gathering']['Wood']['Total'] ?? 0,
-							'crafting_total' => $stats['Crafting']['Total'] ?? 0,
-							'fishing_fame' => $stats['FishingFame'] ?? 0,
-							'farming_fame' => $stats['FarmingFame'] ?? 0,
-							'fecha_registro' => now()
-						]);
-					}
+			if ($responsePersonaje->successful())
+			{
+				$infoPersonaje = json_decode($responsePersonaje->getBody()->getContents(), true);
+
+				// Convertir la fecha al formato correcto
+				$timestamp = Carbon::parse($infoPersonaje['LifetimeStatistics']['Timestamp'])->toDateTimeString();
+				// Almacenar los datos de LifetimeStatistics
+				$lifetimeStatistics = $infoPersonaje['LifetimeStatistics'];
+				$lifetimeStats = $personajesRegistrado->lifetimeStatistics()->updateOrCreate(
+					['personaje_id' => $personajesRegistrado->id],
+					[
+						'PvE_Total' => $lifetimeStatistics['PvE']['Total'],
+						'PvE_Royal' => $lifetimeStatistics['PvE']['Royal'],
+						'PvE_Outlands' => $lifetimeStatistics['PvE']['Outlands'],
+						'PvE_Avalon' => $lifetimeStatistics['PvE']['Avalon'],
+						'PvE_Hellgate' => $lifetimeStatistics['PvE']['Hellgate'],
+						'PvE_CorruptedDungeon' => $lifetimeStatistics['PvE']['CorruptedDungeon'],
+						'PvE_Mists' => $lifetimeStatistics['PvE']['Mists'],
+						'Crafting_Total' => $lifetimeStatistics['Crafting']['Total'],
+						'Crafting_Royal' => $lifetimeStatistics['Crafting']['Royal'],
+						'Crafting_Outlands' => $lifetimeStatistics['Crafting']['Outlands'],
+						'Crafting_Avalon' => $lifetimeStatistics['Crafting']['Avalon'],
+						'CrystalLeague' => $lifetimeStatistics['CrystalLeague'],
+						'FishingFame' => $lifetimeStatistics['FishingFame'],
+						'FarmingFame' => $lifetimeStatistics['FarmingFame'],
+						'Timestamp_Conec' => $timestamp, // Usar la fecha formateada
+					]
+				);
+
+				// Almacenar los datos de GatheringStatistics
+				$gatheringStatistics = $lifetimeStatistics['Gathering'];
+				$resources = ['Fiber', 'Hide', 'Ore', 'Rock', 'Wood', 'All'];
+
+				foreach ($resources as $resource) {
+					$lifetimeStats->gatheringStatistics()->updateOrCreate(
+						[
+							'lifetime_statistics_id' => $lifetimeStats->id,
+							'resource_type' => $resource,
+						],
+						[
+							'Total' => $gatheringStatistics[$resource]['Total'],
+							'Royal' => $gatheringStatistics[$resource]['Royal'],
+							'Outlands' => $gatheringStatistics[$resource]['Outlands'],
+							'Avalon' => $gatheringStatistics[$resource]['Avalon'],
+						]
+					);
 				}
 			}
 			
-			usleep(200000); // 200ms
-			
-		} catch (\Exception $e) {
-			Log::error("Error guardando estadísticas para {$personaje->Id_albion}: " . $e->getMessage());
 		}
 	}
+
+	/**
+	* Esta función realiza una consulta a la Pagina del gameinfo.albiononline 
+    * para buscar información de una alianza segun su id. 
+	* 
+	* @param string   $identificador cadena de texto que contiene el id de albion 
+	* de la alianza
+	*
+	* @return Retorna un array.
+	*/
+
+	public function alianza($identificador)
+	{
+		try {
+            $url = 'https://gameinfo.albiononline.com/api/gameinfo/alliances/';
+			$response = Http::get($url.$identificador);
+
+			$respuesta = $response->getBody()->getContents();// accedemos a el contenido			
+
+            $respuesta = json_decode($respuesta); //convertimos en json	
+
+			return $respuesta;
+				
+
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            //report($e);	 
+	        return false;
+        }
+	}
+
 }
