@@ -14,6 +14,7 @@ class DeleteUser implements DeletesUsers
     {
         $user->deleteProfilePhoto();
         $user->tokens->each->delete();
+        $user->authProviders()->delete(); //eliminar informacion del proveedor
         $user->delete();
     }
 }
