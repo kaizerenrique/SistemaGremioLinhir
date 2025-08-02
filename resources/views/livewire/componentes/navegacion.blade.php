@@ -17,10 +17,19 @@
 
             <!-- Auth links desktop -->
             <div class="hidden md:flex items-center space-x-4">
-                <a href="{{ route('login') }}" class="text-light hover:text-accent">Inicio de sesión</a>
-                <a href="{{ route('register') }}" class="bg-accent text-white px-4 py-2 rounded hover:bg-hover transition-colors">
-                    Registrarse
-                </a>
+                
+                @if (Route::has('login'))                            
+                    @auth                         
+                        <a href="{{ url('dashboard') }}" class="bg-accent text-white px-4 py-2 rounded hover:bg-hover transition-colors">
+                            Dashboard
+                        </a>
+                    @else                            
+                        <a href="{{ route('login') }}" class="text-light hover:text-accent">Inicio de sesión</a>
+                        <a href="{{ route('register') }}" class="bg-accent text-white px-4 py-2 rounded hover:bg-hover transition-colors">
+                            Registrarse
+                        </a>
+                    @endauth                            
+                @endif
             </div>
 
             <!-- Botón hamburguesa -->
