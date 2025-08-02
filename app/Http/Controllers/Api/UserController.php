@@ -14,47 +14,70 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    public function handle(Request $request)
+    // Redirección para API
+    public function redirect_api()
     {
-        // Validar el token
-        $request->validate([
-            'access_token' => 'required|string'
-        ]);
+        return Socialite::driver('discord')
+            ->redirectUrl(config("services.discord.redirect_api"))
+            ->stateless()
+            ->redirect();
 
+            //dd($prueba);
+        
+    }
+
+    // Callback para API
+    public function callback_api(Request $request)
+    {
         try {
-            // Obtener usuario de Discord
-            $discordUser = Socialite::driver('discord')->userFromToken($request->access_token);
+            $providerUser = Socialite::driver('discord')->redirectUrl(config("services.discord.redirect_api"))->stateless()->user();
+            //comprobar si el usuario está registrado
+            $user = User::where('email', $providerUser->getEmail())->first();
 
-            // Generar contraseña aleatoria
-            $plainPassword = Str::password(12); // 12 caracteres con combinación de letras, números y símbolos
-            
-            // Enviar correo con la contraseña en texto plano
-            Mail::to($providerUser->getEmail())->send(new PasswordGeneratedMail($plainPassword));
-            
-            // Buscar o crear usuario
-            $user = User::firstOrCreate(
-                ['discord_id' => $discordUser->getId()],
-                [
-                    'name' => $discordUser->getName(),
-                    'email' => $discordUser->getEmail(),
-                    'password' => Hash::make($plainPassword ), // Contraseña dummy
-                ]
-            );
+            if (!$user) {
+                // Generar contraseña aleatoria
+                $plainPassword = Str::password(12); // 12 caracteres con combinación de letras, números y símbolos
+                
+                // Enviar correo con la contraseña en texto plano
+                Mail::to($providerUser->getEmail())->send(new PasswordGeneratedMail($plainPassword));
 
-            // Generar token de API
-            $token = $user->createToken('discord-token')->plainTextToken;
+                $user = User::create([
+                    'email' => $providerUser->getEmail(),
+                    'name' => $providerUser->getName(),
+                    'password' => Hash::make($plainPassword),
+                ]);
+            }
 
-            return response()->json([
-                'user' => $user,
-                'access_token' => $token,
-                'token_type' => 'Bearer'
+            $user->authProviders()->updateOrCreate([
+                'provider' => 'discord',
+            ], [
+                'provider_id' => $providerUser->getId(),
+                'avatar' => $providerUser->getAvatar(),
+                'token' => $providerUser->token,
+                'nickname' => $providerUser->getNickname(),
             ]);
 
-        } catch (\Exception $e) {
+            // Crear token de API
+            $token = $user->createToken('mobile-token')->plainTextToken;
+
             return response()->json([
-                'error' => 'Invalid token',
-                'message' => $e->getMessage()
-            ], 401);
-        }
+                    'token' => $token,
+                    'user' => $user
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Autenticación fallida'], 401);
+        }        
+
+    }
+
+    public function getUser(Request $request)
+    {
+        return response()->json($request->user());
+    }
+
+    public function logout(Request $request)
+    {
+        $request->user()->tokens()->delete();
+        return response()->json(['message' => 'Sesión cerrada']);
     }
 }
