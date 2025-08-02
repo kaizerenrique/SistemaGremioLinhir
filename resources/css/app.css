@@ -5,3 +5,50 @@
 [x-cloak] {
     display: none;
 }
+
+/* Paleta de colores personalizada */
+.bg-dark { background-color: #1A202C; }
+.text-light { color: #E2E8F0; }
+.text-accent { color: #9F7AEA; }
+.bg-accent { background-color: #9F7AEA; }
+.border-secondary { border-color: #4A5568; }
+.hover\:bg-hover:hover { background-color: #6B46C1; }
+
+/* Para evitar parpadeo con Alpine x-cloak */
+[x-cloak] { display: none !important; }
+
+/* Animaciones */
+@keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slide-in-left {
+    0% { transform: translateX(-100px); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+}
+
+.animate-fade-in {
+    animation: fade-in 1.5s ease-out;
+}
+
+.animate-slide-in-left {
+    animation: slide-in-left 1s ease-out 0.3s backwards;
+}
+
+.animate-float {
+    animation: float 4s ease-in-out infinite;
+    animation-delay: 1s;
+}
+
+@media (max-width: 640px) {
+    .animate-pan {
+        animation: pan 120s linear infinite; /* Más lento en móviles */
+        background-size: 300% auto;
+    }
+}

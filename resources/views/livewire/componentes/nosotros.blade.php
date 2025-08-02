@@ -1,0 +1,57 @@
+<section class="py-20 bg-dark relative overflow-hidden" id="nosotros">
+    <div class="container mx-auto px-4">
+        <h2 class="text-4xl md:text-5xl font-bold text-accent text-center mb-12 animate-slide-in">
+            Nosotros
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+            <!-- Sección Historia -->
+            <div class="space-y-6 text-light text-lg leading-relaxed">
+                <p class="border-l-4 border-accent pl-4">
+                    Fundado el <span class="text-accent font-semibold">25 de septiembre de 2022</span> por
+                    <span class="text-accent">Kaizerenrique</span> y <span class="text-accent">Dmaro</span>,
+                    el gremio Linhir tiene su base en la isla homónima de Fort Sterling, capital del reino
+                    de Blyn Brae.
+                </p>
+
+                <p>
+                    Nuestro nombre, sugerido por Dmaro, proviene de la ciudad gondoriana situada en la
+                    confluencia de los ríos Serni y Gilrain, cuyo significado es <span class="italic">"Río de
+                        Música"</span>.
+                </p>
+
+                <div class="bg-dark/50 p-6 rounded-lg">
+                    <h3 class="text-accent text-xl font-bold mb-3">Hitos Importantes:</h3>
+                    <ul class="space-y-3">
+                        <li class="flex items-start">
+                            <span class="text-accent mr-2">▹</span>
+                            Agosto 2023: Primer HQ en caminos de Avalon
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-accent mr-2">▹</span>
+                            Febrero 2024: HO en zona negra
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-accent mr-2">▹</span>
+                            Actualmente: HO nivel 3 cerca del portal de Fort Sterling
+                        </li>
+                    </ul>
+                </div>
+
+                <p>
+                    Especializados en recolección y actividades PVE/PVP, hemos demostrado que el enfoque
+                    estratégico y la colaboración son armas tan poderosas como las mejores espadas.
+                </p>
+            </div>
+
+            <!-- Sección Video (solo desktop) -->
+            <div class="hidden md:block relative aspect-video rounded-xl overflow-hidden shadow-2xl">
+                <iframe class="w-full h-full"
+                    src="https://www.youtube.com/embed/voSGtRaox9I?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0"
+                    title="Operación Furia de Invierno" frameborder="0"
+                    allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+                </iframe>
+            </div>
+        </div>
+    </div>
+</section>
