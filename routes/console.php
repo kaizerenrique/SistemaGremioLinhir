@@ -13,7 +13,7 @@ Artisan::command('inspire', function () {
 
 
 Schedule::command(CheckServerStatus::class)
-        ->everyFifteenSeconds()  // Ejecutar cada 15 minutos
+        ->everyFifteenSeconds()  // Ejecutar cada 15 segundos
         ->between('9:00', '10:30') // Solo en este rango horario UTC
         ->withoutOverlapping()   // Prevenir ejecuciones simultáneas
         ->onOneServer();         // Para entornos con múltiples servidores
