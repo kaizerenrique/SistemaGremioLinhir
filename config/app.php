@@ -132,5 +132,6 @@ return [
     */
 
     'linhir_gremio_id' => env('LINHIR_GREMIO_ID'),
+    'canal_estado_servidor' => env('CANAL_ESTADO_SERVIDOR'),
 
 ];
