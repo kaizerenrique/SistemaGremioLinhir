@@ -3,19 +3,8 @@
 @tailwind utilities;
 
 [x-cloak] {
-    display: none;
+    display: none !important;
 }
-
-/* Paleta de colores personalizada */
-.bg-dark { background-color: #1A202C; }
-.text-light { color: #E2E8F0; }
-.text-accent { color: #9F7AEA; }
-.bg-accent { background-color: #9F7AEA; }
-.border-secondary { border-color: #4A5568; }
-.hover\:bg-hover:hover { background-color: #6B46C1; }
-
-/* Para evitar parpadeo con Alpine x-cloak */
-[x-cloak] { display: none !important; }
 
 /* Animaciones */
 @keyframes fade-in {
@@ -48,7 +37,7 @@
 
 @media (max-width: 640px) {
     .animate-pan {
-        animation: pan 120s linear infinite; /* Más lento en móviles */
+        animation: pan 120s linear infinite;
         background-size: 300% auto;
     }
 }

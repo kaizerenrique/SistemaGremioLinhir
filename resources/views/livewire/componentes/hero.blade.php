@@ -3,23 +3,23 @@
     <div class="absolute inset-0 z-0">
         <img src="{{ asset('imagenes/hero.jpg') }}" alt="Fondo hero Linhir"
             class="w-full h-full object-cover animate-fade-in">
-        <div class="absolute inset-0 bg-dark/70 backdrop-blur-sm"></div>
+        <div class="absolute inset-0 bg-base-100/60 backdrop-blur-sm"></div>
     </div>
 
     <div class="container mx-auto px-4 relative z-10">
         <div class="flex flex-col lg:flex-row items-center justify-between gap-8">
             <!-- Sección texto -->
             <div class="text-center lg:text-left lg:w-1/2 animate-slide-in-left">
-                <h1 class="text-4xl md:text-6xl xl:text-7xl font-bold text-accent mb-6">
+                <h1 class="text-4xl md:text-6xl xl:text-7xl font-bold text-content-accent mb-6">
                     LINHIR
                 </h1>
 
-                <p class="text-light text-xl md:text-2xl xl:text-3xl mb-8 leading-relaxed max-w-2xl mx-auto lg:mx-0">
+                <p class="text-content-light text-xl md:text-2xl xl:text-3xl mb-8 leading-relaxed max-w-2xl mx-auto lg:mx-0">
                     Un gremio de crafters y farmers en Albion Online
                 </p>
 
                 <a href="#reclutamiento"
-                    class="bg-accent hover:bg-hover text-white px-8 py-4 rounded-lg text-lg md:text-xl font-semibold transition-all transform hover:scale-105 inline-block">
+                    class="bg-primary hover:bg-hover-primary text-white px-8 py-4 rounded-lg text-lg md:text-xl font-semibold transition-all transform hover:scale-105 inline-block">
                     Únete ahora
                 </a>
             </div>
