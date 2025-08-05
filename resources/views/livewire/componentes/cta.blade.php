@@ -16,16 +16,16 @@
             <!-- Estadísticas responsive -->
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-3 mb-3 md:mb-12">
                 <div class="bg-base-300/70 p-3 md:p-4 rounded-lg border-2 border-primary/30 backdrop-blur-sm">
-                    <div class="text-primary text-xl md:text-2xl font-bold">Numero</div>
-                    <div class="text-content-light text-xs md:text-sm uppercase">Miembros</div>
+                    <div class="text-primary text-xl md:text-2xl font-bold">Integrantes</div>
+                    <div class="text-content-light text-xs md:text-sm uppercase">{{$linhir_datos->basic->memberCount}}</div>
                 </div>
                 <div class="bg-base-300/70 p-3 md:p-4 rounded-lg border-2 border-primary/30 backdrop-blur-sm">
-                    <div class="text-primary text-xl md:text-2xl font-bold">Numero</div>
-                    <div class="text-content-light text-xs md:text-sm uppercase">Fama Total</div>
+                    <div class="text-primary text-xl md:text-2xl font-bold">Alianza</div>
+                    <div class="text-content-light text-xs md:text-sm uppercase">{{$alianza}}</div>
                 </div>
                 <div class="bg-base-300/70 p-3 md:p-4 rounded-lg border-2 border-primary/30 backdrop-blur-sm">
-                    <div class="text-primary text-xl md:text-2xl font-bold">2</div>
-                    <div class="text-content-light text-xs md:text-sm uppercase">HO</div>
+                    <div class="text-primary text-xl md:text-2xl font-bold">Hideouts</div>
+                    <div class="text-content-light text-xs md:text-sm uppercase">{{$ho_gremiales}}</div>
                 </div>
             </div>
 
