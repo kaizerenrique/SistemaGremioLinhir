@@ -11,15 +11,15 @@
                     <!-- Contenedor imagen cuadrada -->
                     <div class="mb-4 overflow-hidden rounded-lg w-[217px] h-[217px] mx-auto">
                         <img src="{{ asset('imagenes/' . $specialist['image']) }}" 
-                             alt="{{ $specialist['name'] }}"
+                             alt="{{ $specialist['especialidad'] }}"
                              class="w-full h-full object-none rounded-lg transition-transform duration-300 group-hover:scale-105"
                              loading="lazy">
                     </div>
                     
                     <!-- Contenido texto -->
                     <div class="text-center space-y-3">
-                        <h3 class="text-xl font-bold text-content-light leading-tight">{{ $specialist['character'] }}</h3>
-                        <p class="text-content-accent font-semibold text-sm uppercase tracking-wide">{{ $specialist['name'] }}</p>
+                        <h3 class="text-xl font-bold text-content-light leading-tight">{{ $specialist['name'] }}</h3>
+                        <p class="text-content-accent font-semibold text-sm uppercase tracking-wide">{{ $specialist['especialidad'] }}</p>
                         
                         <!-- Fama compacta -->
                         <div class="flex items-center justify-center space-x-1 text-content-light text-sm">
