@@ -1,4 +1,4 @@
-<section class="py-12 md:py-20 bg-base-200/95 relative" id="reclutamiento">
+<section class="py-12 md:py-20 bg-base-200 relative" id="reclutamiento">
     <div class="container mx-auto px-4">
         <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-content-accent text-center mb-8 md:mb-16">
             Proceso de Reclutamiento

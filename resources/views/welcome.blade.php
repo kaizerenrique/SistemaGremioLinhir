@@ -18,7 +18,7 @@
         <!-- Styles -->
         @livewireStyles
     </head>
-    <body class="bg-dark min-h-screen">
+    <body class="bg-base-100 min-h-screen">
         <!-- Nav -->
         @livewire('componentes.navegacion')
 
