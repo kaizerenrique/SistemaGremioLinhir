@@ -4,6 +4,13 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
+        <!--  Meta Palabras Clave -->
+        <meta name="keywords" content="Somos un Gremio especializado en la recolección de recursos, su procesamiento y posterior fabricación de items.">
+        <meta name="article:tag" content="Gremio Linhir">
+
+        <!--  Meta Descripción -->
+        <meta name="description" content="Web Oficial del Gremio Linhir">  
+
         <title>Linhir</title>
         <link rel="shortcut icon" type="image/x-icon" href="{{ asset('/imagenes/favicon.ico') }}">
 
