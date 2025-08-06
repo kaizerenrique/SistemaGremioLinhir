@@ -18,4 +18,8 @@ Route::middleware([
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
+
+    Route::get('/linhir', function () {
+        return view('paginas.linhir-listado');
+    })->name('linhir');
 });

@@ -38,10 +38,19 @@ class LinhirIntegrantes extends Component
                 ->paginate($this->lim);
         }
 
-        //dd($miembros);
+        //dd($miembros); 
 
         return view('livewire.linhir-integrantes',[
             'miembros' => $miembros,
         ]);
+    }
+
+    /**
+     * Corrige la numeracion de la tabla al realizar 
+     * una busqueda
+     */
+    public function updatingBuscar()
+    {
+        $this->resetPage();
     }
 }
