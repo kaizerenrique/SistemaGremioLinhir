@@ -22,4 +22,8 @@ Route::middleware([
     Route::get('/linhir', function () {
         return view('paginas.linhir-listado');
     })->name('linhir');
+
+    Route::get('/usuarios', function () {
+        return view('paginas.usuarios');
+    })->name('usuarios');
 });
