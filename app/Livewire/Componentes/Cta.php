@@ -12,7 +12,9 @@ class Cta extends Component
     public function render()
     {
         $linhir_id = config('app.linhir_gremio_id');
-        $linhir_datos = $this->consultargremio($linhir_id);
+        //$linhir_datos = $this->consultargremio($linhir_id);
+
+        $linhir_datos = 92;
 
         $alianza = "HRL";
 

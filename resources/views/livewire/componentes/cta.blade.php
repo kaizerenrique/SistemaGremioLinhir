@@ -17,7 +17,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-3 mb-3 md:mb-12">
                 <div class="bg-base-300/70 p-3 md:p-4 rounded-lg border-2 border-primary/30 backdrop-blur-sm">
                     <div class="text-primary text-xl md:text-2xl font-bold">Integrantes</div>
-                    <div class="text-content-light text-xs md:text-sm uppercase">{{$linhir_datos->basic->memberCount}}</div>
+                    <div class="text-content-light text-xs md:text-sm uppercase">{{$linhir_datos}}</div>
                 </div>
                 <div class="bg-base-300/70 p-3 md:p-4 rounded-lg border-2 border-primary/30 backdrop-blur-sm">
                     <div class="text-primary text-xl md:text-2xl font-bold">Alianza</div>
