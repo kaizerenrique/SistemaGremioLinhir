@@ -119,6 +119,8 @@
                     </div>
                 </div>
             </section>
+
+            @livewire('linhir-integrantes')
         </div>
     </div>
 </x-app-layout>
