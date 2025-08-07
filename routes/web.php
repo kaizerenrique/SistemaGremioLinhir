@@ -26,4 +26,8 @@ Route::middleware([
     Route::get('/usuarios', function () {
         return view('paginas.usuarios');
     })->name('usuarios');
+
+    Route::get('/roles', function () {
+        return view('paginas.rolesypermisos');
+    })->name('roles');
 });
