@@ -22,6 +22,7 @@
                         class="text-xs font-semibold tracking-wide text-left bg-base-300 text-content-light uppercase border-b border-primary/30">
                         <th class="px-4 py-3">ID</th>
                         <th class="px-4 py-3">Nombre</th>
+                        <th class="px-4 py-3">Permisos</th>
                         <th class="px-4 py-3">Acciones</th>
                     </tr>
                 </thead>
@@ -36,6 +37,16 @@
                                 class="border-t-0 px-4 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4 text-left">
                                 {{ $role->name }}
                             </th>
+
+                            <td class="px-4 py-3 text-xs">
+                                <div class="flex flex-wrap gap-1">
+                                    @foreach ($role->permissions as $permission)
+                                        <span class="bg-primary/10 text-primary px-2 py-1 rounded-full text-xs">
+                                            {{ $permission->name }}
+                                        </span>
+                                    @endforeach
+                                </div>
+                            </td>
 
                             <!-- Acciones -->
                             <th
