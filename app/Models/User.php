@@ -80,6 +80,16 @@ class User extends Authenticatable
         return $this->hasMany(AuthProvider::class);
     }
 
+    // Nuevo método para verificar registro con Socialite
+    public function getIsSocialiteAttribute(): bool
+    {
+        if ($this->relationLoaded('authProviders')) {
+        return !$this->authProviders->isEmpty();
+        }
+        
+        return $this->authProviders()->exists();
+    }
+
     /**
      * Personajes del juego
      */

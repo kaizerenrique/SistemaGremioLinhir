@@ -22,6 +22,7 @@
                         class="text-xs font-semibold tracking-wide text-left bg-base-300 text-content-light uppercase border-b border-primary/30">
                         <th class="px-4 py-3">Nombre</th>
                         <th class="px-4 py-3">Correo</th>
+                        <th class="px-4 py-3">Registro</th>
                         <th class="px-4 py-3">Rol</th>
                         <th class="px-4 py-3">Acciones</th>
                     </tr>
@@ -38,6 +39,18 @@
                                 class="border-t-0 px-4 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4 text-left">
                                 {{ $usuario->email }}
                             </th>
+
+                            <td>
+                                @if($usuario->is_socialite)
+                                    <span class="bg-neutro text-content-light px-2 py-1 rounded-full text-xs">
+                                        Socialite
+                                    </span>
+                                @else
+                                    <span class="bg-primary text-content-light px-2 py-1 rounded-full text-xs">
+                                        Correo
+                                    </span>
+                                @endif
+                            </td>
 
                             @foreach($usuario->roles as $role)
                                 <th
