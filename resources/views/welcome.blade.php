@@ -55,7 +55,6 @@
             @livewire('componentes.footer')
             <!-- / Footer -->
 
-
         </main>
 
         @livewireScripts
