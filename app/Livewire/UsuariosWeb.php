@@ -15,7 +15,8 @@ class UsuariosWeb extends Component
     use DiscordComan; 
 
 
-    public $buscar;
+    public $buscar, $lim;
+    public $modaleditar = false;
 
     protected $queryString = [
         'buscar' => ['except' => '']
@@ -24,13 +25,16 @@ class UsuariosWeb extends Component
 
     public function render()
     {
+        if ($this->lim == null) {
+            $this->lim = 6;
+        } 
 
         //listar los usuarios y consultar por nombre y correo
         $usuarios = User::with('authProviders')
                     ->where('name', 'like', '%'.$this->buscar . '%')
                     ->orWhere('email', 'like', '%'.$this->buscar . '%')
                     ->orderBy('id','desc')
-                    ->paginate(6);
+                    ->paginate($this->lim);
         
         $roles = Role::all();
 
@@ -45,5 +49,11 @@ class UsuariosWeb extends Component
     public function updatingBuscar()
     {
         $this->resetPage();
+    }
+
+    public function editarrol($identificador)
+    {
+        //dd($identificador);
+        $this->modaleditar = true;
     }
 }
