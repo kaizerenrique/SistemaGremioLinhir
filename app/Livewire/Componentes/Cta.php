@@ -12,8 +12,7 @@ class Cta extends Component
     public function render()
     {
         $tops = $this->topFamaSemanal();
-
-        //dd($tops );
+        
 
         return view('livewire.componentes.cta',[
             'topPvE' => $tops['pve'],

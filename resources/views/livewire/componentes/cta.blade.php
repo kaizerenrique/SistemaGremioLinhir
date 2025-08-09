@@ -13,7 +13,7 @@
                 ¡Las Puertas de Linhir Están Abiertas!
             </h2>
 
-            <h3 class="text-xl md:text-5xl lg:text-6xlfont-bold text-content-accent mb-4 md:mb-6 px-2 drop-shadow-xl">
+            <h3 class="text-lg md:text-5lg lg:text-6lg font-bold text-content-accent mb-4 md:mb-6 px-2 drop-shadow-xl">
                 Top 3 Fama PvE - Semana {{ $semana }}
             </h3>
 
@@ -22,14 +22,12 @@
                 @foreach ($topPvE as $index => $jugador)
                     <div class="bg-base-300/70 p-3 md:p-4 rounded-lg border-2 border-primary/30 backdrop-blur-sm">
                         <div class="text-primary text-xl md:text-2xl font-bold">{{ $jugador['nombre'] }}</div>
-                        <div class="text-content-light text-xs md:text-sm uppercase">{{ number_format($jugador['fama_inicio']) }}</div>
-                        <div class="text-content-light text-xs md:text-sm uppercase">{{ number_format($jugador['fama_fin']) }}</div>
                         <div class="text-content-light text-xs md:text-sm uppercase">+{{ number_format($jugador['diferencia']) }}</div>
                     </div>                    
                 @endforeach                
             </div>
 
-            <h3 class="text-xl md:text-5xl lg:text-6xlfont-bold text-content-accent mb-4 md:mb-6 px-2 drop-shadow-xl">
+            <h3 class="text-lg md:text-5lg lg:text-6lg font-bold text-content-accent mb-4 md:mb-6 px-2 drop-shadow-xl">
                 Top 3 Fama PvP - Semana {{ $semana }}
             </h3>
 
@@ -38,8 +36,6 @@
                 @foreach ($topPvP as $index => $jugador)
                     <div class="bg-base-300/70 p-3 md:p-4 rounded-lg border-2 border-primary/30 backdrop-blur-sm">
                         <div class="text-primary text-xl md:text-2xl font-bold">{{ $jugador['nombre'] }}</div>
-                        <div class="text-content-light text-xs md:text-sm uppercase">{{ number_format($jugador['fama_inicio']) }}</div>
-                        <div class="text-content-light text-xs md:text-sm uppercase">{{ number_format($jugador['fama_fin']) }}</div>
                         <div class="text-content-light text-xs md:text-sm uppercase">+{{ number_format($jugador['diferencia']) }}</div>
                     </div>                    
                 @endforeach                
