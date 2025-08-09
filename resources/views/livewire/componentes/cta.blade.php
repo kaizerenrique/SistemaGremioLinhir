@@ -13,21 +13,39 @@
                 ¡Las Puertas de Linhir Están Abiertas!
             </h2>
 
+            <h3 class="text-xl md:text-5xl lg:text-6xlfont-bold text-content-accent mb-4 md:mb-6 px-2 drop-shadow-xl">
+                Top 3 Fama PvE - Semana {{ $semana }}
+            </h3>
+
             <!-- Estadísticas responsive -->
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-3 mb-3 md:mb-12">
-                <div class="bg-base-300/70 p-3 md:p-4 rounded-lg border-2 border-primary/30 backdrop-blur-sm">
-                    <div class="text-primary text-xl md:text-2xl font-bold">Integrantes</div>
-                    <div class="text-content-light text-xs md:text-sm uppercase">{{$linhir_datos}}</div>
-                </div>
-                <div class="bg-base-300/70 p-3 md:p-4 rounded-lg border-2 border-primary/30 backdrop-blur-sm">
-                    <div class="text-primary text-xl md:text-2xl font-bold">Alianza</div>
-                    <div class="text-content-light text-xs md:text-sm uppercase">{{$alianza}}</div>
-                </div>
-                <div class="bg-base-300/70 p-3 md:p-4 rounded-lg border-2 border-primary/30 backdrop-blur-sm">
-                    <div class="text-primary text-xl md:text-2xl font-bold">Hideouts</div>
-                    <div class="text-content-light text-xs md:text-sm uppercase">{{$ho_gremiales}}</div>
-                </div>
+                @foreach ($topPvE as $index => $jugador)
+                    <div class="bg-base-300/70 p-3 md:p-4 rounded-lg border-2 border-primary/30 backdrop-blur-sm">
+                        <div class="text-primary text-xl md:text-2xl font-bold">{{ $jugador['nombre'] }}</div>
+                        <div class="text-content-light text-xs md:text-sm uppercase">{{ number_format($jugador['fama_inicio']) }}</div>
+                        <div class="text-content-light text-xs md:text-sm uppercase">{{ number_format($jugador['fama_fin']) }}</div>
+                        <div class="text-content-light text-xs md:text-sm uppercase">+{{ number_format($jugador['diferencia']) }}</div>
+                    </div>                    
+                @endforeach                
             </div>
+
+            <h3 class="text-xl md:text-5xl lg:text-6xlfont-bold text-content-accent mb-4 md:mb-6 px-2 drop-shadow-xl">
+                Top 3 Fama PvP - Semana {{ $semana }}
+            </h3>
+
+            <!-- Estadísticas responsive -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-3 mb-3 md:mb-12">
+                @foreach ($topPvP as $index => $jugador)
+                    <div class="bg-base-300/70 p-3 md:p-4 rounded-lg border-2 border-primary/30 backdrop-blur-sm">
+                        <div class="text-primary text-xl md:text-2xl font-bold">{{ $jugador['nombre'] }}</div>
+                        <div class="text-content-light text-xs md:text-sm uppercase">{{ number_format($jugador['fama_inicio']) }}</div>
+                        <div class="text-content-light text-xs md:text-sm uppercase">{{ number_format($jugador['fama_fin']) }}</div>
+                        <div class="text-content-light text-xs md:text-sm uppercase">+{{ number_format($jugador['diferencia']) }}</div>
+                    </div>                    
+                @endforeach                
+            </div>
+
+            
 
             <!-- Botón responsive -->
             <a href="#reclutamiento"

@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 use App\Console\Commands\CheckServerStatus;
 use App\Console\Commands\IntegrantesDeLinhir;
+use App\Console\Commands\UpdateFamaSemanal;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -20,3 +21,12 @@ Schedule::command(CheckServerStatus::class)
         ->onOneServer();         // Para entornos con múltiples servidores
 
 Schedule::command(IntegrantesDeLinhir::class)->hourly();
+
+// Ejecutar cada día a las 03:00 para mantener actualizados los valores
+Schedule::command(UpdateFamaSemanal::class)->dailyAt('03:00');
+
+// Ejecución especial los lunes a las 00:05 para capturar inicio de semana
+Schedule::command(UpdateFamaSemanal::class)->weeklyOn(1, '00:05');
+
+// Ejecución especial los domingos a las 23:55 para capturar fin de seman
+Schedule::command(UpdateFamaSemanal::class)->weeklyOn(0, '23:55');   

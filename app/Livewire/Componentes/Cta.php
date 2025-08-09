@@ -11,21 +11,14 @@ class Cta extends Component
 
     public function render()
     {
-        $linhir_id = config('app.linhir_gremio_id');
-        //$linhir_datos = $this->consultargremio($linhir_id);
+        $tops = $this->topFamaSemanal();
 
-        $linhir_datos = 92;
-
-        $alianza = "HRL";
-
-        $ho_gremiales = 2;
-
-        //dd($alianza);
+        //dd($tops );
 
         return view('livewire.componentes.cta',[
-            'linhir_datos' => $linhir_datos,
-            'ho_gremiales' => $ho_gremiales,
-            'alianza' => $alianza,
+            'topPvE' => $tops['pve'],
+            'topPvP' => $tops['pvp'],
+            'semana' => $tops['semana']
         ]);
     }
 }

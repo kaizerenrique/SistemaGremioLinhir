@@ -10,6 +10,7 @@ use App\Models\Personaje;
 use App\Models\GatheringStatistics;
 use App\Models\LifetimeStatistics;
 use Carbon\Carbon;
+use App\Models\FamaSemanal;
 
 trait Albion 
 {
@@ -389,6 +390,91 @@ trait Albion
             //report($e);	 
 	        return false;
         }
+	}
+
+	/**
+	 * Actualiza los registros de fama semanal para todos los miembros
+	 */
+	public function actualizarFamaSemanal()
+	{
+		$fechaInicioSemana = now()->startOfWeek()->format('Y-m-d');
+		$miembros = Personaje::where('miembro', true)->get();
+
+		foreach ($miembros as $miembro) {
+			$url = "https://gameinfo.albiononline.com/api/gameinfo/players/{$miembro->Id_albion}";
+			$response = Http::get($url);
+			
+			if ($response->successful()) {
+				$data = $response->json();
+				$pveTotal = $data['LifetimeStatistics']['PvE']['Total'] ?? 0;
+				$pvpTotal = $data['KillFame'] ?? 0;
+				
+				// Buscar o crear registro
+				$registro = FamaSemanal::firstOrNew([
+					'personaje_id' => $miembro->id,
+					'semana_inicio' => $fechaInicioSemana
+				]);
+				
+				// Si es un nuevo registro, guardar como inicio
+				if (!$registro->exists) {
+					$registro->fama_pve_inicio = $pveTotal;
+					$registro->fama_pvp_inicio = $pvpTotal;
+				}
+				
+				// Actualizar valores finales
+				$registro->fama_pve_fin = $pveTotal;
+				$registro->fama_pvp_fin = $pvpTotal;
+				$registro->save();
+			}
+		}
+	}
+
+	/**
+	 * Obtiene los top 3 de fama PvE y PvP para la semana actual
+	 * 
+	 * @return array
+	 */
+	public function topFamaSemanal()
+	{
+		$fechaInicioSemana = now()->startOfWeek()->format('Y-m-d');
+		
+		// Top PvE
+		$topPvE = FamaSemanal::with('personaje')
+			->where('semana_inicio', $fechaInicioSemana)
+			->get()
+			->map(function ($item) {
+				return [
+					'nombre' => $item->personaje->Name,
+					'fama_inicio' => $item->fama_pve_inicio,
+					'fama_fin' => $item->fama_pve_fin,
+					'diferencia' => $item->diferencia_pve
+				];
+			})
+			->sortByDesc('diferencia')
+			->take(3)
+			->values();
+		
+		// Top PvP
+		$topPvP = FamaSemanal::with('personaje')
+			->where('semana_inicio', $fechaInicioSemana)
+			->get()
+			->map(function ($item) {
+				return [
+					'nombre' => $item->personaje->Name,
+					'fama_inicio' => $item->fama_pvp_inicio,
+					'fama_fin' => $item->fama_pvp_fin,
+					'diferencia' => $item->diferencia_pvp
+				];
+			})
+			->sortByDesc('diferencia')
+			->take(3)
+			->values();
+
+		return [
+			'pve' => $topPvE,
+			'pvp' => $topPvP,
+			'semana' => $fechaInicioSemana
+		];
 	}
 
 
