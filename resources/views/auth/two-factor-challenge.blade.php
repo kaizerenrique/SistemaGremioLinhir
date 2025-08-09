@@ -96,14 +96,14 @@
 
                         <!-- Botón de envío -->
                         <div class="flex justify-center mt-6">
-                            <x-button.primary class="w-full sm:w-auto">
+                            <x-button class="w-full sm:w-auto">
                                 <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none"
                                     viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                                 </svg>
                                 {{ __('Verificar') }}
-                            </x-button.primary>
+                            </x-button>
                         </div>
                     </form>
                 </div>
