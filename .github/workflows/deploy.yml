@@ -18,12 +18,6 @@ jobs:
         php-version: '8.3'
         extensions: mbstring, ctype, fileinfo, tokenizer, pdo_mysql
 
-    - name: Install dependencies
-      run: |
-        composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
-        npm ci
-        npm run prod
-
     - name: Setup SSH
       uses: webfactory/ssh-agent@v0.8.0
       with:
