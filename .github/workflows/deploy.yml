@@ -1,0 +1,45 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.3'
+        extensions: mbstring, ctype, fileinfo, tokenizer, pdo_mysql
+
+    - name: Install dependencies
+      run: |
+        composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+        npm ci
+        npm run prod
+
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.8.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: Deploy to VPS
+      run: |
+        ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "
+          cd ${{ secrets.PROJECT_PATH }} && \
+          git fetch origin main && \
+          git reset --hard origin/main && \
+          composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader && \
+          npm ci && \
+          npm run prod && \
+          php artisan migrate --force && \
+          php artisan optimize:clear && \
+          php artisan storage:link && \
+          sudo systemctl restart php-fpm nginx
+        "
