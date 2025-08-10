@@ -15,7 +15,7 @@
                 </h1>
 
                 <p class="text-content-light text-xl md:text-2xl xl:text-3xl mb-8 leading-relaxed max-w-2xl mx-auto lg:mx-0">
-                    Un gremio de crafters y farmers en Albion Online
+                    Un gremio de crafters y farmers en Albion Online.
                 </p>
 
                 <a href="#reclutamiento"
