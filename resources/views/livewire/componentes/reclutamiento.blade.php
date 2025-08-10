@@ -52,7 +52,7 @@
                                 <h4 class="font-semibold">Únete a nuestro Discord</h4>
                                 <p class="text-content-light/80">
                                     Enlace:
-                                    <a href="https://discord.gg/tu-enlace"
+                                    <a href="https://discord.gg/VYpsPZMRf5"
                                         class="text-primary hover:text-hover-primary underline break-all" target="_blank">
                                         discord.gg/linhir
                                     </a>
@@ -97,7 +97,7 @@
                 </div>
 
                 <!-- Botón responsive -->
-                <a href="https://discord.gg/tu-enlace"
+                <a href="https://discord.gg/VYpsPZMRf5"
                     class="inline-block w-full bg-primary hover:bg-hover-primary text-white px-4 md:px-8 py-3 md:py-4 rounded-lg text-lg md:text-xl font-bold text-center transition-colors">
                     <i class="fab fa-discord mr-2"></i> Unirse a Discord
                 </a>
