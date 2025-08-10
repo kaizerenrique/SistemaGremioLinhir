@@ -23,10 +23,10 @@ Schedule::command(CheckServerStatus::class)
 Schedule::command(IntegrantesDeLinhir::class)->hourly();
 
 // Ejecutar cada día a las 03:00 para mantener actualizados los valores
-Schedule::command(UpdateFamaSemanal::class)->dailyAt('03:00');
+Schedule::command(UpdateFamaSemanal::class)->hourly();
 
 // Ejecución especial los lunes a las 00:05 para capturar inicio de semana
-Schedule::command(UpdateFamaSemanal::class)->weeklyOn(1, '00:05');
+Schedule::command(UpdateFamaSemanal::class)->weeklyOn(1, '00:10');
 
 // Ejecución especial los domingos a las 23:55 para capturar fin de seman
-Schedule::command(UpdateFamaSemanal::class)->weeklyOn(0, '23:55');   
+Schedule::command(UpdateFamaSemanal::class)->weeklyOn(0, '23:50');   
