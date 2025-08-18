@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Schedule;
 use App\Console\Commands\CheckServerStatus;
 use App\Console\Commands\IntegrantesDeLinhir;
 use App\Console\Commands\UpdateFamaSemanal;
+use App\Console\Commands\UpdateGoldPrice;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -30,3 +31,6 @@ Schedule::command(UpdateFamaSemanal::class)->weeklyOn(1, '00:10');
 
 // Ejecución especial los domingos a las 23:55 para capturar fin de seman
 Schedule::command(UpdateFamaSemanal::class)->weeklyOn(0, '23:50');   
+
+// Ejecucion para revisar el valor del oro
+Schedule::command(UpdateGoldPrice::class)->hourly();
