@@ -44,6 +44,9 @@ return [
         // optional
         'allow_gif_avatars' => (bool)env('DISCORD_AVATAR_GIF', true),
         'avatar_default_extension' => env('DISCORD_EXTENSION_DEFAULT', 'png'), // only pick from jpg, png, webp
+
+        'bot_token' => env('DISCORD_BOT_TOKEN'),
+        'servidor_discord_linhir' => env('DISCORD_SERVER_LINHIR_TOKEN'),
     ],
 
 

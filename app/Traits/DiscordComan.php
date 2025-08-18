@@ -19,7 +19,7 @@ trait DiscordComan
     {
         try {
             // Usa el token del bot, no el client_id
-            $this->token = env('DISCORD_BOT_TOKEN');
+            $this->token = config('services.discord.bot_token');
 
             // Realiza la solicitud GET a la API de Discord
             $response = Http::withHeaders([
@@ -64,9 +64,9 @@ trait DiscordComan
         
         try {
             // Token del bot
-            $this->token = env('DISCORD_BOT_TOKEN');
+            $this->token = config('services.discord.bot_token');
 
-            $guildId = env('DISCORD_SERVER_LINHIR_TOKEN');
+            $guildId = config('services.discord.servidor_discord_linhir');
 
             // Obtener la lista de miembros del servidor
             $membersResponse = Http::withHeaders([
@@ -158,9 +158,9 @@ trait DiscordComan
     {
         try {
             // Token del bot
-            $this->token = env('DISCORD_BOT_TOKEN');
+            $this->token = config('services.discord.bot_token');
 
-            $guildId = env('DISCORD_SERVER_LINHIR_TOKEN');
+            $guildId = config('services.discord.servidor_discord_linhir');
 
             // Obtener la lista de miembros del servidor
             $membersResponse = Http::withHeaders([
@@ -214,7 +214,7 @@ trait DiscordComan
         }
 
         // Obtener el ID del servidor de Discord desde .env
-        $guildId = env('DISCORD_SERVER_LINHIR_TOKEN'); // Asegúrate de que este sea el ID del servidor
+        $guildId = config('services.discord.servidor_discord_linhir'); // Asegúrate de que este sea el ID del servidor
 
         if (!$guildId) {
             return false; // No se ha configurado el ID del servidor
