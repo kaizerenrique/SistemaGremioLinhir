@@ -14,13 +14,15 @@ class PasswordGeneratedMail extends Mailable
     use Queueable, SerializesModels;
 
     public $password;
+    public $nombre;
 
     /**
      * Create a new message instance.
      */
-    public function __construct($password)
+    public function __construct($password, $nombre)
     {
         $this->password = $password;
+        $this->nombre = $nombre;
     }
 
     /**
@@ -29,7 +31,7 @@ class PasswordGeneratedMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Password Generated Mail',
+            subject: 'Contraseña de acceso',
         );
     }
 

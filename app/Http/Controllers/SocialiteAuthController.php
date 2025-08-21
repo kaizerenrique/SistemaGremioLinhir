@@ -33,14 +33,18 @@ class SocialiteAuthController extends Controller
             // Generar contraseña aleatoria
             $plainPassword = Str::password(12); // 12 caracteres con combinación de letras, números y símbolos
             
-            // Enviar correo con la contraseña en texto plano
-            Mail::to($providerUser->getEmail())->send(new PasswordGeneratedMail($plainPassword));
+            
 
             $user = User::create([
                 'email' => $providerUser->getEmail(),
                 'name' => $providerUser->getName(),
                 'password' => Hash::make($plainPassword),
             ])->assignRole('Usuario');
+
+
+            $nombre = $providerUser->getName();
+            // Enviar correo con la contraseña en texto plano
+            Mail::to($providerUser->getEmail())->send(new PasswordGeneratedMail($plainPassword, $nombre ));
         }
 
         $user->authProviders()->updateOrCreate([
