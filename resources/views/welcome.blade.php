@@ -47,6 +47,10 @@
             @livewire('componentes.nosotros')
             <!-- / Nosotros -->
 
+            <!-- Musica -->
+            @livewire('componentes.musica')
+            <!-- / Musica -->
+
             <!-- Reclutamiento -->
             @livewire('componentes.reclutamiento')
             <!-- / Reclutamiento -->

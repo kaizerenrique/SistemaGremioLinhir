@@ -14,6 +14,7 @@
                 <a href="#hero" class="text-content-light hover:text-content-accent transition-colors">Inicio</a>
                 <a href="#team" class="text-content-light hover:text-content-accent transition-colors">Equipo</a>
                 <a href="#nosotros" class="text-content-light hover:text-content-accent transition-colors">Nosotros</a>
+                <a href="#musica" class="text-content-light hover:text-content-accent transition-colors">Música</a>
                 <a href="#reclutamiento" class="text-content-light hover:text-content-accent transition-colors">Reclutamiento</a>
             </div>
 
