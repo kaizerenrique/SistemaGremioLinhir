@@ -35,6 +35,10 @@
             @livewire('componentes.hero')
             <!-- / Hero -->
 
+            <!-- CTA -->
+            @livewire('componentes.anniversary-cta')
+            <!-- / CTA -->
+
             <!-- Team -->
             @livewire('componentes.team')
             <!-- / Team -->
