@@ -29,7 +29,6 @@ class Panel extends Component
         //revisar el valor del oro
         $oro = GoldPrice::latest('id')->first();
 
-
         //comprobar perfiles
         $perfiles = auth()->user()->personajes()->where('Name', 'like', '%'.$this->buscar.'%')->paginate(6);
         //contar perfiles
