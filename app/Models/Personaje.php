@@ -28,4 +28,14 @@ class Personaje extends Model
     {
         return $this->hasOne(GatheringStatistics::class, 'personaje_id');
     }
+
+    public function movimientosBancarios()
+    {
+        return $this->hasMany(BancoGremial::class);
+    }
+
+    public function saldoActual()
+    {
+        return BancoGremial::saldoPersonaje($this->id);
+    }
 }
