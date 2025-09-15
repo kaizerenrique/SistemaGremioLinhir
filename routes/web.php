@@ -30,4 +30,8 @@ Route::middleware([
     Route::get('/roles', function () {
         return view('paginas.rolesypermisos');
     })->name('roles');
+
+    Route::get('/bancogremial', function () {
+        return view('paginas.bancodegremio');
+    })->name('bancodegremio');
 });

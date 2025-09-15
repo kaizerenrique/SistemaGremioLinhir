@@ -36,6 +36,16 @@ class Personaje extends Model
 
     public function saldoActual()
     {
-        return BancoGremial::saldoPersonaje($this->id);
+        // Si ya se cargaron los sums con withSum, úsalos
+        if (isset($this->attributes['ingresos']) && isset($this->attributes['egresos'])) {
+            return (int) $this->attributes['ingresos'] - (int) $this->attributes['egresos'];
+        }
+        
+        // Si no, calcula el saldo con una consulta optimizada
+        $ingresos = $this->movimientosBancarios()->where('tipo', 'ingreso')->sum('monto');
+        $egresos = $this->movimientosBancarios()->where('tipo', 'egreso')->sum('monto');
+        
+        return $ingresos - $egresos;
     }
+    
 }

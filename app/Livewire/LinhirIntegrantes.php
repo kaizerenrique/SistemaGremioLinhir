@@ -5,6 +5,7 @@ namespace App\Livewire;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Personaje;
+use App\Models\BancoGremial;
 
 class LinhirIntegrantes extends Component
 {

@@ -32,6 +32,7 @@
                         <th class="px-4 py-3">Discord</th>
                         <th class="px-4 py-3">Fama PVE</th>
                         <th class="px-4 py-3">Fama de crafteo</th>
+                        <th class="px-4 py-3">Saldo</th>
                         <th class="px-4 py-3">Acciones</th>
                     </tr>
                 </thead>
@@ -101,6 +102,18 @@
                                     class="border-t-0 px-4 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4 text-left">
                                     No hay estadísticas disponibles
                                 </th>
+                                <th
+                                    class="border-t-0 px-4 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4 text-left">
+                                    No hay estadísticas disponibles
+                                </th>
+                            @endif
+
+                            @if ($miembro->lifetimeStatistics)
+                                <th
+                                    class="border-t-0 px-4 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4 text-left">
+                                    {{ number_format($miembro->saldoActual(), 0, ',', '.') }}
+                                </th>
+                            @else
                                 <th
                                     class="border-t-0 px-4 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4 text-left">
                                     No hay estadísticas disponibles
