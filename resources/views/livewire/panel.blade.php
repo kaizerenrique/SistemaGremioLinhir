@@ -80,10 +80,10 @@
 
             </div>
             <div class="relative w-full max-w-full flex-grow flex-1 text-center mt-1 mx-5">
-                <button
+                <a href="{{ route('personajesregistro') }}"
                     class="bg-primary hover:bg-hover-primary text-white px-8 py-2 rounded-lg text-base font-semibold transition-all transform hover:scale-105 inline-block">
                     Registrar personaje
-                </button>
+                </a>
             </div>
         </div>
 

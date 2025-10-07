@@ -34,4 +34,8 @@ Route::middleware([
     Route::get('/bancogremial', function () {
         return view('paginas.bancodegremio');
     })->name('bancodegremio');
+
+    Route::get('/registro_de_personaje', function () {
+        return view('paginas.personajesregistro');
+    })->name('personajesregistro');
 });
