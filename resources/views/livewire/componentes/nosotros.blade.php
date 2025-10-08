@@ -21,19 +21,19 @@
                 </p>
 
                 <div class="bg-base-300/50 p-4 rounded-lg border border-base-300">
-                    <h3 class="text-primary text-xl font-bold mb-3">Hitos Importantes:</h3>
+                    <h3 class="text-primary text-xl font-bold mb-3">Contamos Con:</h3>
                     <ul class="space-y-3">
                         <li class="flex items-start">
                             <span class="text-primary mr-2">▹</span>
-                            Agosto 2023: Primer HQ en caminos de Avalon
+                            HO nivel 3 cerca del portal de Fort Sterling
                         </li>
                         <li class="flex items-start">
                             <span class="text-primary mr-2">▹</span>
-                            Febrero 2024: HO en zona negra
+                            HQ en caminos de avalon con bono de pociones y comidas.
                         </li>
                         <li class="flex items-start">
                             <span class="text-primary mr-2">▹</span>
-                            Actualmente: HO nivel 3 cerca del portal de Fort Sterling
+                            Islas gremiales en Fort Sterling y Caerleon 
                         </li>
                     </ul>
                 </div>
@@ -47,7 +47,7 @@
             <!-- Sección Video (solo desktop) -->
             <div class="hidden md:block relative aspect-video rounded-xl overflow-hidden shadow-2xl border border-base-300">
                 <iframe class="w-full h-full"
-                    src="https://www.youtube.com/embed/voSGtRaox9I?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0"
+                    src="https://www.youtube.com/embed/YYZog3ZpZTY?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0"
                     title="Operación Furia de Invierno" frameborder="0"
                     allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
                 </iframe>
