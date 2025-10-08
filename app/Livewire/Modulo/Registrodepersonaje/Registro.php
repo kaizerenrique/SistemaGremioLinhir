@@ -56,46 +56,75 @@ class Registro extends Component
         $this->modalconfirmarperfil = true;
     }
 
-    public function guardarperfil($idntificador)
-    {
-        try {
-            $personaje = $this->consultarpersonaje($idntificador);
-            $this->modalconfirmarperfil = false;
+public function guardarperfil($idntificador)
+{
+    try {
+        $personaje = $this->consultarpersonaje($idntificador);
+        $this->modalconfirmarperfil = false;
 
-            $confirmar = Personaje::where('Id_albion', $personaje->Id)->first();
+        $user = Auth::user();
+        $discordProvider = $user->authProviders()
+            ->where('provider', 'discord')
+            ->first();
 
-            if (!$confirmar) {
-                $user = Auth::user();
-                $discordProvider = $user->authProviders()
-                    ->where('provider', 'discord')
-                    ->first();
+        // Buscar si el personaje ya existe
+        $personajeExistente = Personaje::where('Id_albion', $personaje->Id)->first();
 
-                $datosPersonaje = [
-                    'Name' => $personaje->Name,
-                    'Id_albion' => $personaje->Id,
-                    'GuildId' => $personaje->GuildId ?? null, // También seguro para GuildId
-                ];
+        if (!$personajeExistente) {
+            // CASO 1: Personaje no registrado - Registrar nuevo
+            $datosPersonaje = [
+                'Name' => $personaje->Name,
+                'Id_albion' => $personaje->Id,
+                'GuildId' => $personaje->GuildId ?? null,
+            ];
 
-                // Manejo seguro de discord_user_id
+            if ($discordProvider && isset($discordProvider->provider_id)) {
+                $datosPersonaje['discord_user_id'] = $discordProvider->provider_id;
+            }
+
+            $persona = auth()->user()->personajes()->create($datosPersonaje);
+
+            $this->modalmensaje = true;
+            $this->titulo = "Registrado Correctamente";
+            $this->mensaje = "El personaje fue agregado correctamente";
+
+        } else {
+            // Personaje ya existe, verificar el usuario asignado
+            if (is_null($personajeExistente->user_id)) {
+                // CASO 2: Personaje existe pero sin usuario - Asignar al usuario actual
+                $datosActualizacion = ['user_id' => $user->id];
+
+                // Actualizar discord_user_id si el usuario tiene uno
                 if ($discordProvider && isset($discordProvider->provider_id)) {
-                    $datosPersonaje['discord_user_id'] = $discordProvider->provider_id;
+                    $datosActualizacion['discord_user_id'] = $discordProvider->provider_id;
                 }
 
-                $persona = auth()->user()->personajes()->create($datosPersonaje);
+                $personajeExistente->update($datosActualizacion);
 
                 $this->modalmensaje = true;
-                $this->titulo = "Registrado Correctamente";
-                $this->mensaje = "El personaje fue agregado correctamente";
-            } else {
+                $this->titulo = "Personaje Asignado";
+                $this->mensaje = "El personaje ha sido asignado a tu cuenta correctamente";
+
+            } else if ($personajeExistente->user_id === $user->id) {
+                // CASO 3a: Personaje ya pertenece al usuario actual
                 $this->modalmensaje = true;
-                $this->titulo = "Este personaje ya está registrado";
-                $this->mensaje = "El personaje ya fue registrado por otro usuario ";
+                $this->titulo = "Personaje Ya Registrado";
+                $this->mensaje = "Este personaje ya está registrado en tu cuenta";
+
+            } else {
+                // CASO 3b: Personaje pertenece a otro usuario
+                $this->modalmensaje = true;
+                $this->titulo = "Personaje No Disponible";
+                $this->mensaje = "Este personaje ya está registrado por otro usuario";
             }
-        } catch (\Exception $e) {
-            $this->modalmensaje = true;
-            $this->titulo = "Error al registrar: " . $e->getMessage();
         }
+
+    } catch (\Exception $e) {
+        $this->modalmensaje = true;
+        $this->titulo = "Error al registrar";
+        $this->mensaje = "Ocurrió un error: " . $e->getMessage();
     }
+}
 
     public function redirectToDashboard()
     {
