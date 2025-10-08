@@ -35,8 +35,9 @@
             @livewire('componentes.hero')
             <!-- / Hero -->
 
-            <!-- CTA -->
-            @livewire('componentes.anniversary-cta')
+
+            <!-- CTA de aniversario se usa como anuncio para eventos 'componentes.anniversary-cta'-->
+            
             <!-- / CTA -->
 
             <!-- Team -->
