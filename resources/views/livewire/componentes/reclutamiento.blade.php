@@ -14,15 +14,19 @@
                 <ul class="space-y-2 md:space-y-4 text-content-light text-sm md:text-base">
                     <li class="flex items-start gap-2 md:gap-3">
                         <i class="fas fa-check text-primary mt-1 text-sm md:text-base"></i>
-                        <span class="font-semibold">30M+</span> Fama Total
+                        <span class="font-semibold">Servidor:</span> América 
                     </li>
                     <li class="flex items-start gap-3">
                         <i class="fas fa-check text-primary mt-1"></i>
-                        <span class="font-semibold">350K+</span> Fama de Recolección
+                        <span class="font-semibold">15M+</span> Fama Total (No limitativo)
                     </li>
                     <li class="flex items-start gap-3">
                         <i class="fas fa-check text-primary mt-1"></i>
-                        Servidor: América
+                        Compromiso con actividades gremiales
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i class="fas fa-check text-primary mt-1"></i>
+                        Respetar normas del gremio
                     </li>
                     <li class="flex items-start gap-3">
                         <i class="fas fa-check text-primary mt-1"></i>
