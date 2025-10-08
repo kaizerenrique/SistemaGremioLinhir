@@ -13,10 +13,10 @@
             <!-- Tarjeta con el reproductor de Spotify -->
             <div class="spotify-card bg-base-200 rounded-xl overflow-hidden shadow-xl border border-base-300 p-6">
                 <iframe style="border-radius:12px"
-                    src="https://open.spotify.com/embed/album/7nzaHbC2xSU8TlrbvvNlEZ?utm_source=generator" width="100%"
-                    height="352" frameBorder="0" allowfullscreen=""
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy">
-                </iframe>
+                    src="https://open.spotify.com/embed/playlist/6x3c41BCZ3hXpXBGT6qcHf?utm_source=generator"
+                    width="100%" height="352" frameBorder="0" allowfullscreen=""
+                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                    loading="lazy"></iframe>
 
                 <div class="mt-6 text-content-light">
                     <h3 class="text-xl font-bold text-primary mb-2">Gremio Linhir - Álbum Completo</h3>
