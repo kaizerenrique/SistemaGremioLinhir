@@ -3,7 +3,7 @@
         <div class="flex justify-between items-center h-16">
             <!-- Logo y nombre -->
             <div class="flex-shrink-0 flex items-center">
-                <a class="flex-shrink-0 flex items-center" href="">
+                <a class="flex-shrink-0 flex items-center" href="{{ route('welcome') }}">
                     <img src="{{ asset('imagenes/escudo_512x512.png') }}" class="h-8 w-8" alt="Linhir Logo">
                     <span class="ml-2 text-content-light text-xl font-bold">LINHIR</span>
                 </a>                

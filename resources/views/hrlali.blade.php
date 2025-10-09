@@ -32,7 +32,7 @@
 
         <main class="pt-16">
             <!-- Hero -->
-            @livewire('componentes.cta')
+            @livewire('componentes.alianza.hero')
             <!-- / Hero -->
 
 
