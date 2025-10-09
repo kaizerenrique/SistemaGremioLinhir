@@ -7,6 +7,10 @@ Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
 
+Route::get('/hrl', function () {
+    return view('hrlali');
+})->name('hrl');
+
 Route::get('/auth/redirect', [SocialiteAuthController::Class, 'redirect'])->name('auth.redirect');
 Route::get('/auth/callback', [SocialiteAuthController::Class, 'callback'])->name('auth.callback');
 
