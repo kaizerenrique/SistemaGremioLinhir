@@ -35,6 +35,11 @@
             @livewire('componentes.alianza.hero')
             <!-- / Hero -->
 
+            <!-- Hero -->
+            @livewire('componentes.alianza.historia')
+            <!-- / Hero -->
+
+
 
             
 

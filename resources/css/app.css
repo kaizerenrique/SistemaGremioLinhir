@@ -109,3 +109,29 @@
 .countdown-number:hover {
     transform: translateY(-5px);
 }
+
+/* Animaciones personalizadas */
+.scroll-indicator {
+    scroll-behavior: smooth;
+}
+
+/* Efectos de hover mejorados */
+.group:hover .group-hover\:scale-105 {
+    transform: scale(1.05);
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .space-y-16 > :not([hidden]) ~ :not([hidden]) {
+        --tw-space-y-reverse: 0;
+        margin-top: calc(4rem * calc(1 - var(--tw-space-y-reverse)));
+        margin-bottom: calc(4rem * var(--tw-space-y-reverse));
+    }
+}
+
+/* Smooth transitions */
+.transition-all {
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 300ms;
+}
