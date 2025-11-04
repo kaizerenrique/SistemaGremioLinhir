@@ -28,20 +28,24 @@
     </head>
     <body class="bg-base-100 min-h-screen">
         <!-- Nav -->
-        @livewire('componentes.navegacion')
+        @livewire('componentes.alianza.navegacion')
 
         <main class="pt-16">
             <!-- Hero -->
             @livewire('componentes.alianza.hero')
             <!-- / Hero -->
 
-            <!-- Hero -->
+            <!-- Historia -->
             @livewire('componentes.alianza.historia')
-            <!-- / Hero -->
+            <!-- / Historia -->
 
+            <!-- Gremios -->
+            @livewire('componentes.alianza.gremios')
+            <!-- / Gremios -->
 
-
-            
+            <!-- Ingresos -->
+            @livewire('componentes.alianza.ingresos')
+            <!-- / Ingresos -->            
 
             <!-- Footer -->
             @livewire('componentes.footer')

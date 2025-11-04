@@ -1,4 +1,4 @@
-<section class="relative py-16 md:py-24 overflow-hidden bg-base-100">
+<section class="relative py-16 md:py-24 overflow-hidden bg-base-100" id="hero">
     <!-- Fondo -->
     <div class="absolute inset-0 z-0">
         <div class="absolute inset-0 bg-cover bg-center opacity-80 animate-pan"

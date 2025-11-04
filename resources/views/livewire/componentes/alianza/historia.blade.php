@@ -51,7 +51,7 @@
              });
          }
      }"
-     x-init="init()">
+     x-init="init()" id="nuestrahistoria">
 
     <!-- Encabezado -->
     <div class="text-center mb-16 animate-fade-in">
