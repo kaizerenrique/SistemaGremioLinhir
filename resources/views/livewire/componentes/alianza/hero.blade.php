@@ -29,7 +29,7 @@
 
 
             <!-- Botón responsive -->
-            <a href="https://discord.gg/XCdj9KQNQb"
+            <a href="https://discord.gg/4WbQzjm9gN"
                 class="inline-block bg-primary hover:bg-hover-primary text-white px-8 md:px-12 py-3 md:py-4 rounded-lg text-base md:text-xl font-bold transition-all hover:scale-105 shadow-lg mt-4">
                 ¡Ingresa a Discord!
             </a>
