@@ -15,11 +15,11 @@ class Gremios extends Component
     // Mapeo de enlaces de Discord para cada gremio
     protected $discordLinks = [
         'iS2Q2Mw3S1asC9GVMC5P2w' => 'https://discord.gg/VYpsPZMRf5', //Linhir
-        'E4k0czn4TS-4aG_0LcDJbg' => 'https://discord.gg/KrhqFewCX', //The New-Order
+        'E4k0czn4TS-4aG_0LcDJbg' => 'https://discord.gg/5SWfqPAKCS', //The New-Order
         'GpSyOn-wQ7OKRHD3ip4zrA' => 'https://discord.gg/s4nguis', //S4nguis Bell4torum
         '71HB_IECTNuFF-Pme-1gMA' => 'https://discord.gg/nightshift', //NigthShift         
-        'IuAulLpDSVaJ_KL4Zeks9g' => 'https://discord.gg/hiddenfortress', //Hidden Fortress
-        'hkssSH4MSbuSm3JM-KaMIg' => 'https://discord.gg/obliviom', //OBLIVIOM
+        'IuAulLpDSVaJ_KL4Zeks9g' => 'https://discord.gg/qHxAnVh5', //Hidden Fortress
+        'hkssSH4MSbuSm3JM-KaMIg' => 'https://discord.gg/XMjA5utnp9', //OBLIVIOM
         'C_NL6QnWQimzcUQVXlknrw' => 'https://discord.gg/ghwve3v6dD' //LORDS DAEDRAS
     ];
 
