@@ -7,6 +7,7 @@ use App\Console\Commands\CheckServerStatus;
 use App\Console\Commands\IntegrantesDeLinhir;
 use App\Console\Commands\UpdateFamaSemanal;
 use App\Console\Commands\UpdateGoldPrice;
+use App\Console\Commands\GenerateSitemap;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -34,3 +35,6 @@ Schedule::command(UpdateFamaSemanal::class)->weeklyOn(0, '23:50');
 
 // Ejecucion para revisar el valor del oro
 Schedule::command(UpdateGoldPrice::class)->hourly();
+
+// Ejecucion para generar mapa del sitio 
+Schedule::command(GenerateSitemap::class)->weekly();

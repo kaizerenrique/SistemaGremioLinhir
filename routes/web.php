@@ -14,6 +14,11 @@ Route::get('/hrl', function () {
 Route::get('/auth/redirect', [SocialiteAuthController::Class, 'redirect'])->name('auth.redirect');
 Route::get('/auth/callback', [SocialiteAuthController::Class, 'callback'])->name('auth.callback');
 
+// Agrega esta ruta para poder verificar el sitemap fácilmente
+Route::get('/sitemap.xml', function () {
+    return response()->file(public_path('sitemap.xml'));
+});
+
 Route::middleware([
     'auth:sanctum',
     config('jetstream.auth_session'),
