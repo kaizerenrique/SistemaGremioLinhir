@@ -9,10 +9,7 @@ use App\Http\Controllers\Api\ApisController;
 Route::get('/auth/discord', [UserController::class, 'redirect_api']);
 Route::get('/auth/discord/callback', [UserController::class, 'callback_api']);
 
-Route::get('/oro', [ApisController::class, 'valordeloro'])->middleware('auth:sanctum');
 
-Route::get('/nombre/{nombredelpersonaje}', [ApisController::class, 'nombredepersonaje'])->middleware('auth:sanctum');
-Route::post('/vincular-personaje-discord', [ApisController::class, 'vincularPersonajeDiscord'])->middleware('auth:sanctum');
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -22,3 +19,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [UserController::class, 'getUser']);
     Route::post('/logout', [UserController::class, 'logout']);
 });
+
+// Rutas para el bot de Discord de Linhir
+
+// consultar el valos del oro en albion
+Route::get('/oro', [ApisController::class, 'valordeloro'])->middleware('auth:sanctum');
+
+// consultar la hora del servidor 
+Route::get('/horario', [ApisController::class, 'horario'])->middleware('auth:sanctum');

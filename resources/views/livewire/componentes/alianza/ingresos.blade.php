@@ -107,7 +107,7 @@
                     </p>
                     
                     <div class="space-y-4">
-                        <a href="{{ $discordUrl }}" 
+                        <a href="https://discord.gg/4WbQzjm9gN" 
                            target="_blank"
                            rel="noopener noreferrer"
                            class="inline-flex items-center px-8 py-4 bg-[#5865F2] text-white font-bold rounded-xl transition-all duration-300 hover:bg-[#4752c4] hover:transform hover:scale-105 group w-full justify-center text-lg">
