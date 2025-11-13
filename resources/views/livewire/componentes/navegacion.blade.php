@@ -1,4 +1,4 @@
-<nav class="bg-base-100 shadow-lg fixed w-full z-50" x-data="{ isOpen: false }">
+<nav class="bg-base-100 shadow-lg fixed w-full z-50" x-data="{ isOpen: false, calculatorOpen: false }">
     <div class="max-w-7xl mx-auto px-4">
         <div class="flex justify-between items-center h-16">
             <!-- Logo y nombre -->
@@ -17,6 +17,30 @@
                 <a href="#musica" class="text-content-light hover:text-content-accent transition-colors">Música</a>
                 <a href="#reclutamiento" class="text-content-light hover:text-content-accent transition-colors">Reclutamiento</a>
                 <a href="{{ url('hrl') }}" class="text-content-light hover:text-content-accent transition-colors">Alianza HRL</a>
+                
+                <!-- Menú Calculadora Desktop -->
+                <div class="relative" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false">
+                    <button class="text-content-light hover:text-content-accent transition-colors flex items-center">
+                        Calculadoras
+                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                    
+                    <div x-show="open" 
+                         x-cloak
+                         class="absolute left-0 mt-2 w-48 bg-base-100 rounded-md shadow-lg py-1 z-50"
+                         x-transition:enter="transition ease-out duration-100"
+                         x-transition:enter-start="opacity-0 scale-95"
+                         x-transition:enter-end="opacity-100 scale-100"
+                         x-transition:leave="transition ease-in duration-75"
+                         x-transition:leave-start="opacity-100 scale-100"
+                         x-transition:leave-end="opacity-0 scale-95">
+                        <a href="#" class="block px-4 py-2 text-sm text-content-light hover:bg-base-300">Item 1</a>
+                        <a href="#" class="block px-4 py-2 text-sm text-content-light hover:bg-base-300">Item 2</a>
+                        <a href="#" class="block px-4 py-2 text-sm text-content-light hover:bg-base-300">Item 3</a>
+                    </div>
+                </div>
             </div>
 
             <!-- Auth links desktop -->
@@ -62,6 +86,22 @@
                 <a href="#nosotros" class="block text-content-light hover:text-content-accent px-3 py-2">Nosotros</a>
                 <a href="#reclutamiento" class="block text-content-light hover:text-content-accent px-3 py-2">Reclutamiento</a>
                 <a href="{{ url('hrl') }}" class="block text-content-light hover:text-content-accent px-3 py-2">Alianza HRL</a>
+                
+                <!-- Menú Calculadora Mobile -->
+                <div class="px-3 py-2">
+                    <button @click="calculatorOpen = !calculatorOpen" 
+                            class="w-full text-left flex justify-between items-center text-content-light hover:text-content-accent">
+                        Calculadoras
+                        <svg :class="{'rotate-180': calculatorOpen}" class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                    <div x-show="calculatorOpen" class="ml-4 mt-2 space-y-1">
+                        <a href="#" class="block px-3 py-2 text-content-light hover:text-content-accent">Item 1</a>
+                        <a href="#" class="block px-3 py-2 text-content-light hover:text-content-accent">Item 2</a>
+                        <a href="#" class="block px-3 py-2 text-content-light hover:text-content-accent">Item 3</a>
+                    </div>
+                </div>
                 
                 <div class="border-t border-base-300 pt-2 mt-2">
                     @if (Route::has('login'))
