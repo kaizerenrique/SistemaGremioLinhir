@@ -16,8 +16,7 @@ class Gremios extends Component
     protected $discordLinks = [
         'iS2Q2Mw3S1asC9GVMC5P2w' => 'https://discord.gg/VYpsPZMRf5', //Linhir
         'E4k0czn4TS-4aG_0LcDJbg' => 'https://discord.gg/5SWfqPAKCS', //The New-Order
-        '71HB_IECTNuFF-Pme-1gMA' => 'https://discord.gg/nightshift', //NigthShift         
-        'IuAulLpDSVaJ_KL4Zeks9g' => 'https://discord.gg/qHxAnVh5', //Hidden Fortress
+        '71HB_IECTNuFF-Pme-1gMA' => 'https://discord.gg/nightshift', //NigthShift 
         'hkssSH4MSbuSm3JM-KaMIg' => 'https://discord.gg/VQfKSpW947', //OBLIVIOM
         'C_NL6QnWQimzcUQVXlknrw' => 'https://discord.gg/ghwve3v6dD', //LORDS DAEDRAS
         'bImVFxgcROWzC1cA-BNXqA' => 'https://discord.gg/YyBzZqAKTy' //Redemptio Aeterna
@@ -34,7 +33,6 @@ class Gremios extends Component
             ["Id" => "iS2Q2Mw3S1asC9GVMC5P2w", "Name" => "Linhir"],
             ["Id" => "E4k0czn4TS-4aG_0LcDJbg", "Name" => "The New-Order"],
             ["Id" => "71HB_IECTNuFF-Pme-1gMA", "Name" => "NigthShift"],
-            ["Id" => "IuAulLpDSVaJ_KL4Zeks9g", "Name" => "Hidden Fortress"],
             ["Id" => "hkssSH4MSbuSm3JM-KaMIg", "Name" => "OBLIVIOM"],
             ["Id" => "C_NL6QnWQimzcUQVXlknrw", "Name" => "LORDS DAEDRAS"],
             ["Id" => "bImVFxgcROWzC1cA-BNXqA", "Name" => "Redemptio Aeterna"]
