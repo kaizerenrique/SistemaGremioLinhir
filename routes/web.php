@@ -11,6 +11,10 @@ Route::get('/hrl', function () {
     return view('hrlali');
 })->name('hrl');
 
+Route::get('/calculadora-de-cultivos', function () {
+    return view('calculadoradesemillas');
+})->name('calculadoradesemillas');
+
 Route::get('/auth/redirect', [SocialiteAuthController::Class, 'redirect'])->name('auth.redirect');
 Route::get('/auth/callback', [SocialiteAuthController::Class, 'callback'])->name('auth.callback');
 

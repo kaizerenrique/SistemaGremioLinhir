@@ -16,7 +16,7 @@
                 <a href="#nosotros" class="text-content-light hover:text-content-accent transition-colors">Nosotros</a>
                 <a href="#musica" class="text-content-light hover:text-content-accent transition-colors">Música</a>
                 <a href="#reclutamiento" class="text-content-light hover:text-content-accent transition-colors">Reclutamiento</a>
-                <a href="{{ url('hrl') }}" class="text-content-light hover:text-content-accent transition-colors">Alianza HRL</a>
+                <a href="{{ route('hrl') }}" class="text-content-light hover:text-content-accent transition-colors">Alianza HRL</a>
                 
                 <!-- Menú Calculadora Desktop -->
                 <div class="relative" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false">
@@ -36,9 +36,7 @@
                          x-transition:leave="transition ease-in duration-75"
                          x-transition:leave-start="opacity-100 scale-100"
                          x-transition:leave-end="opacity-0 scale-95">
-                        <a href="#" class="block px-4 py-2 text-sm text-content-light hover:bg-base-300">Item 1</a>
-                        <a href="#" class="block px-4 py-2 text-sm text-content-light hover:bg-base-300">Item 2</a>
-                        <a href="#" class="block px-4 py-2 text-sm text-content-light hover:bg-base-300">Item 3</a>
+                        <a href="{{ route('calculadoradesemillas') }}" class="block px-4 py-2 text-sm text-content-light hover:bg-base-300">De cultivos</a>
                     </div>
                 </div>
             </div>
@@ -85,7 +83,7 @@
                 <a href="#musica" class="block text-content-light hover:text-content-accent px-3 py-2">Música</a>
                 <a href="#nosotros" class="block text-content-light hover:text-content-accent px-3 py-2">Nosotros</a>
                 <a href="#reclutamiento" class="block text-content-light hover:text-content-accent px-3 py-2">Reclutamiento</a>
-                <a href="{{ url('hrl') }}" class="block text-content-light hover:text-content-accent px-3 py-2">Alianza HRL</a>
+                <a href="{{ route('hrl') }}" class="block text-content-light hover:text-content-accent px-3 py-2">Alianza HRL</a>
                 
                 <!-- Menú Calculadora Mobile -->
                 <div class="px-3 py-2">
@@ -97,9 +95,7 @@
                         </svg>
                     </button>
                     <div x-show="calculatorOpen" class="ml-4 mt-2 space-y-1">
-                        <a href="#" class="block px-3 py-2 text-content-light hover:text-content-accent">Item 1</a>
-                        <a href="#" class="block px-3 py-2 text-content-light hover:text-content-accent">Item 2</a>
-                        <a href="#" class="block px-3 py-2 text-content-light hover:text-content-accent">Item 3</a>
+                        <a href="{{ route('calculadoradesemillas') }}" class="block px-3 py-2 text-content-light hover:text-content-accent">De cultivos</a>
                     </div>
                 </div>
                 
