@@ -8,6 +8,7 @@ use App\Console\Commands\IntegrantesDeLinhir;
 use App\Console\Commands\UpdateFamaSemanal;
 use App\Console\Commands\UpdateGoldPrice;
 use App\Console\Commands\GenerateSitemap;
+use App\Console\Commands\DiscordBirthdayNotification;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -38,3 +39,6 @@ Schedule::command(UpdateGoldPrice::class)->hourly();
 
 // Ejecucion para generar mapa del sitio 
 Schedule::command(GenerateSitemap::class)->weekly();
+
+// Ejecucion para cumpleaños 
+Schedule::command(DiscordBirthdayNotification::class)->dailyAt('10:00')->description('Enviar notificaciones de cumpleaños a Discord')->onOneServer(); 

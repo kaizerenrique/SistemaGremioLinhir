@@ -133,5 +133,7 @@ return [
 
     'linhir_gremio_id' => env('LINHIR_GREMIO_ID'),
     'canal_estado_servidor' => env('CANAL_ESTADO_SERVIDOR'),
+    'canal_cumpleanos' => env('DISCORD_BIRTHDAY_WEBHOOK_URL'),           
+    'birthday_mention_role' => env('DISCORD_BIRTHDAY_MENTION_ROLE', '@everyone'),
 
 ];

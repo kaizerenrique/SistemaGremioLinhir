@@ -17,7 +17,7 @@
                 <option value="36">36</option>
                 <option value="48">48</option>
             </select>
-        </div>
+        </div>        
     </div>
     
     <!-- Notificación -->
