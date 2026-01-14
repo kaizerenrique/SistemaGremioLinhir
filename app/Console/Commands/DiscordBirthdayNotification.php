@@ -102,6 +102,7 @@ class DiscordBirthdayNotification extends Command
     {
         $count = $birthdayPeople->count();
         $escudo = asset('imagenes/linhir_escudo_180.png');
+        $imagendecumpleaños = asset('imagenes/birthday-cake.mp4');
         
         $title = $count === 1 
             ? "🎉 ¡HOY ES EL CUMPLEAÑOS DE UN MIEMBRO DEL GREMIO! 🎂" 
@@ -134,7 +135,7 @@ class DiscordBirthdayNotification extends Command
                     "title" => $title,
                     "color" => $color,
                     "thumbnail" => [
-                        "url" => asset('/imagenes/linhir_escudo_180.png') // Icono de pastel
+                        "url" => $imagendecumpleaños // Icono de pastel
                     ],
                     "description" => $description,
                     "fields" => [
