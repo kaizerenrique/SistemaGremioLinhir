@@ -12,7 +12,8 @@ class Personaje extends Model
         'Name',
         'Id_albion',
         'GuildId',
-        'miembro'
+        'miembro',
+        'birthdate'
     ];
 
     public function user(){
