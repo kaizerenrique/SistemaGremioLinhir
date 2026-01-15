@@ -13,7 +13,7 @@ class OllamaController extends Controller
         try {
             $response = Ollama::agent('Asistente del Gremio Linhir.')
                 ->prompt($request->msg)
-                ->model('llama3.1')
+                ->model('llama3.2:3b')
                 ->options([
                     'temperature' => 0.8,  // More creative
                     'top_p' => 0.9,
