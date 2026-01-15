@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\ApisController;
+use App\Http\Controllers\Api\OllamaController;
 
 // Redirección a proveedor (discord)
 Route::get('/auth/discord', [UserController::class, 'redirect_api']);
@@ -27,3 +28,7 @@ Route::get('/oro', [ApisController::class, 'valordeloro'])->middleware('auth:san
 
 // consultar la hora del servidor 
 Route::get('/horario', [ApisController::class, 'horario'])->middleware('auth:sanctum');
+
+
+//prueba api IA
+Route::get('/ollama', [ApisController::class, 'index'])->middleware('auth:sanctum');
