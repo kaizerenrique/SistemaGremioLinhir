@@ -31,4 +31,4 @@ Route::get('/horario', [ApisController::class, 'horario'])->middleware('auth:san
 
 
 //prueba api IA
-Route::get('/ollama', [ApisController::class, 'index'])->middleware('auth:sanctum');
+Route::get('/ollama', [OllamaController::class, 'index'])->middleware('auth:sanctum');
