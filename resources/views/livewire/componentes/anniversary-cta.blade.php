@@ -3,7 +3,7 @@
     <!-- Fondo -->
     <div class="absolute inset-0 z-0">
         <div class="absolute inset-0 bg-cover bg-center opacity-80"
-            style="background-image: url({{ asset('imagenes/CTA_Aniversario.jpeg') }})">
+            style="background-image: url({{ asset('imagenes/CTA_Aniversario_2.png') }})">
         </div>
         <div class="absolute inset-0 bg-gradient-to-b from-base-100 via-base-100/80 to-base-100"></div>
     </div>
