@@ -18,7 +18,7 @@
                     </li>
                     <li class="flex items-start gap-3">
                         <i class="fas fa-check text-primary mt-1"></i>
-                        <span class="font-semibold">15M+</span> Fama Total (No limitativo)
+                        <span class="font-semibold">50M+</span> Fama Total (No limitativo)
                     </li>
                     <li class="flex items-start gap-3">
                         <i class="fas fa-check text-primary mt-1"></i>
