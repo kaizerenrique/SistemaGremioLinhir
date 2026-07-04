@@ -9,6 +9,7 @@ use App\Console\Commands\UpdateFamaSemanal;
 use App\Console\Commands\UpdateGoldPrice;
 use App\Console\Commands\GenerateSitemap;
 use App\Console\Commands\DiscordBirthdayNotification;
+use App\Console\Commands\UpdateEspecialidadesSemanales;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -42,3 +43,6 @@ Schedule::command(GenerateSitemap::class)->weekly();
 
 // Ejecucion para cumpleaños 
 Schedule::command(DiscordBirthdayNotification::class)->dailyAt('10:00')->description('Enviar notificaciones de cumpleaños a Discord')->onOneServer(); 
+
+// Ejecuta para rapas de especialidad
+Schedule::command(UpdateEspecialidadesSemanales::class)->hourly();

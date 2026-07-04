@@ -11,6 +11,8 @@ use App\Models\GatheringStatistics;
 use App\Models\LifetimeStatistics;
 use Carbon\Carbon;
 use App\Models\FamaSemanal;
+use Illuminate\Support\Facades\DB;
+use App\Models\EspecialidadSemanal;
 
 trait Albion 
 {
@@ -294,69 +296,34 @@ trait Albion
 
 	public function lideresEspecialidades()
 	{
-		// Mapeo de campos a especialidades e imágenes
 		$especialidades = [
-			'Hide' => [
-				'nombre' => 'Peletero',
-				'image' => 'hera/peletero.png'
-			],
-			'FishingFame' => [
-				'nombre' => 'Pescador',
-				'image' => 'hera/pescador.png'
-			],
-			'Rock' => [
-				'nombre' => 'Cantero',
-				'image' => 'hera/cantero.png'
-			],
-			'Ore' => [
-				'nombre' => 'Minero',
-				'image' => 'hera/minero.png'
-			],
-			'Fiber' => [
-				'nombre' => 'Cosechador',
-				'image' => 'hera/cosechador.png'
-			],
-			'Wood' => [
-				'nombre' => 'Leñador',
-				'image' => 'hera/lenador.png'
-			],
-			'Crafting_Total' => [
-				'nombre' => 'Crafters',
-				'image' => 'hera/crafters.png'
-			],
-			'FarmingFame' => [
-				'nombre' => 'Agricultor',
-				'image' => 'hera/agricultor.png'
-			]
+			'Hide'          => ['nombre' => 'Peletero',   'image' => 'hera/peletero.png'],
+			'FishingFame'   => ['nombre' => 'Pescador',   'image' => 'hera/pescador.png'],
+			'Rock'          => ['nombre' => 'Cantero',    'image' => 'hera/cantero.png'],
+			'Ore'           => ['nombre' => 'Minero',     'image' => 'hera/minero.png'],
+			'Fiber'         => ['nombre' => 'Cosechador', 'image' => 'hera/cosechador.png'],
+			'Wood'          => ['nombre' => 'Leñador',    'image' => 'hera/lenador.png'],
+			'Crafting_Total' => ['nombre' => 'Crafters',  'image' => 'hera/crafters.png'],
+			'FarmingFame'   => ['nombre' => 'Agricultor', 'image' => 'hera/agricultor.png'],
 		];
 
+		$semanaInicio = now()->startOfWeek()->toDateString();
 		$resultados = [];
 
-		// Procesar cada especialidad
 		foreach ($especialidades as $campo => $config) {
-			if (in_array($campo, ['Hide', 'Rock', 'Ore', 'Fiber', 'Wood'])) {
-				// Especialidades de Gathering (recursos)
-				$lider = GatheringStatistics::select('personajes.Name', 'gathering_statistics.Total as valor')
-					->join('lifetime_statistics', 'gathering_statistics.lifetime_statistics_id', '=', 'lifetime_statistics.id')
-					->join('personajes', 'lifetime_statistics.personaje_id', '=', 'personajes.id')
-					->where('personajes.miembro', true)
-					->where('gathering_statistics.resource_type', $campo)
-					->orderBy('gathering_statistics.Total', 'desc')
-					->first();
-			} else {
-				// Especialidades de Lifetime
-				$lider = LifetimeStatistics::select('personajes.Name', "lifetime_statistics.$campo as valor")
-					->join('personajes', 'lifetime_statistics.personaje_id', '=', 'personajes.id')
-					->where('personajes.miembro', true)
-					->orderBy("lifetime_statistics.$campo", 'desc')
-					->first();
-			}
+			$lider = EspecialidadSemanal::selectRaw('personajes.Name, (valor_fin - valor_inicio) as ganancia')
+				->leftJoin('personajes', 'especialidades_semanales.personaje_id', '=', 'personajes.id')
+				->where('personajes.miembro', true)
+				->where('especialidades_semanales.semana_inicio', $semanaInicio)
+				->where('especialidades_semanales.tipo', $campo)
+				->orderBy('ganancia', 'desc')
+				->first();
 
 			$resultados[] = [
 				'especialidad' => $config['nombre'],
-				'name' => $lider ? $lider->Name : 'Sin datos',
-				'fame' => $lider ? $lider->valor : 0,
-				'image' => $config['image']
+				'name'         => $lider ? $lider->Name : 'Sin datos',
+				'fame'         => $lider ? $lider->ganancia : 0,
+				'image'        => $config['image'],
 			];
 		}
 
