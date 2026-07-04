@@ -7,10 +7,6 @@ Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
 
-Route::get('/hrl', function () {
-    return view('hrlali');
-})->name('hrl');
-
 Route::get('/calculadora-de-cultivos', function () {
     return view('calculadoradesemillas');
 })->name('calculadoradesemillas');

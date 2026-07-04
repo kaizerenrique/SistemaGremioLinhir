@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\GoldPrice;
 use App\Traits\Albion;
 use Carbon\Carbon;
+use App\Models\Personaje;
+use Illuminate\Http\Request;
 
 class ApisController extends Controller
 {
@@ -70,5 +72,10 @@ class ApisController extends Controller
         
         return $response;
 
+    }
+
+    public function consultadepersonaje(Request $request)
+    {
+        
     }
 }

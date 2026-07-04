@@ -19,15 +19,15 @@
                         d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
                         clip-rule="evenodd"></path>
                 </svg>
-                <span class="font-semibold">3º Aniversario</span>
+                <span class="font-semibold">4º Aniversario</span>
             </div>
 
             <h2 class="text-3xl md:text-5xl lg:text-6xl font-bold text-content-accent mb-6 px-2 drop-shadow-xl">
-                Celebra con Nosotros el <span class="text-accent">Tercer Aniversario</span>
+                Celebra con Nosotros el <span class="text-accent">Cuarto Aniversario</span>
             </h2>
 
             <p class="text-content-light text-lg md:text-xl max-w-2xl mx-auto mb-10">
-                Únete a la celebración de nuestros 3 años de aventuras, conquistas y camaradería. ¡Eventos especiales y
+                Únete a la celebración de nuestros 4 años de aventuras, conquistas y camaradería. ¡Eventos especiales y
                 sorpresas te esperan!
             </p>
 
@@ -113,7 +113,7 @@
 
 <script>
     // Fecha objetivo: 25 de septiembre de 2025 (tercer aniversario)
-    const anniversaryDate = new Date('September 25, 2025 00:00:00').getTime();
+    const anniversaryDate = new Date('September 25, 2026 00:00:00').getTime();
 
     function updateCountdown() {
         const now = new Date().getTime();

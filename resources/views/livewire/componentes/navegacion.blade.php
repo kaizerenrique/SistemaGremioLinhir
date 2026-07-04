@@ -16,7 +16,6 @@
                 <a href="#nosotros" class="text-content-light hover:text-content-accent transition-colors">Nosotros</a>
                 <a href="#musica" class="text-content-light hover:text-content-accent transition-colors">Música</a>
                 <a href="#reclutamiento" class="text-content-light hover:text-content-accent transition-colors">Reclutamiento</a>
-                <a href="{{ route('hrl') }}" class="text-content-light hover:text-content-accent transition-colors">Alianza HRL</a>
                 
                 <!-- Menú Calculadora Desktop -->
                 <div class="relative" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false">
@@ -83,7 +82,6 @@
                 <a href="#musica" class="block text-content-light hover:text-content-accent px-3 py-2">Música</a>
                 <a href="#nosotros" class="block text-content-light hover:text-content-accent px-3 py-2">Nosotros</a>
                 <a href="#reclutamiento" class="block text-content-light hover:text-content-accent px-3 py-2">Reclutamiento</a>
-                <a href="{{ route('hrl') }}" class="block text-content-light hover:text-content-accent px-3 py-2">Alianza HRL</a>
                 
                 <!-- Menú Calculadora Mobile -->
                 <div class="px-3 py-2">
