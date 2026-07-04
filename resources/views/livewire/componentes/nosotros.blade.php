@@ -25,7 +25,7 @@
                     <ul class="space-y-3">
                         <li class="flex items-start">
                             <span class="text-primary mr-2">▹</span>
-                            HO nivel 3 cerca del portal de Fort Sterling
+                            Cuatro (4) HOs en distintos mapas
                         </li>
                         <li class="flex items-start">
                             <span class="text-primary mr-2">▹</span>
@@ -47,7 +47,7 @@
             <!-- Sección Video (solo desktop) -->
             <div class="hidden md:block relative aspect-video rounded-xl overflow-hidden shadow-2xl border border-base-300">
                 <iframe class="w-full h-full"
-                    src="https://www.youtube.com/embed/YYZog3ZpZTY?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0"
+                    src="https://www.youtube.com/embed/jaMrtgFIyPc?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0"
                     title="Operación Furia de Invierno" frameborder="0"
                     allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
                 </iframe>
