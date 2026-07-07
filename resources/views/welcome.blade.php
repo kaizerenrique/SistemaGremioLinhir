@@ -40,61 +40,61 @@
 
         <!-- Styles -->
         @livewireStyles
-    </head>
-
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "Organization",
-        "name": "Linhir",
-        "alternateName": "Gremio Linhir",
-        "description": "Gremio de Albion Online ubicado en Fort Sterling (Servidor West). Especializado en recolección, crafteo y contenido PvE/PvP.",
-        "url": "{{ url('/') }}",
-        "logo": "{{ asset('imagenes/escudo_512x512.png') }}",
-        "founder": [
-            {
-                "@type": "Person",
-                "name": "Kaizerenrique"
-            },
-            {
-                "@type": "Person",
-                "name": "Dmaro"
-            }
-        ],
-        "foundingDate": "2022-09-25",
-        "game": {
-            "@type": "VideoGame",
-            "name": "Albion Online",
-            "gamePlatform": "PC, Mobile",
-            "server": "West"
-        },
-        "address": {
-            "@type": "PostalAddress",
-            "addressLocality": "Fort Sterling",
-            "addressCountry": "Albion (Game World)"
-        },
-        "member": [
-            {
-                "@type": "Person",
-                "roleName": "Guild Master"
-            }
-        ],
-        "knowsAbout": [
-            "Albion Online",
-            "Guild Management",
-            "PVP",
-            "Farming",
-            "Crafting",
-            "Gathering"
-        ],
-        "sameAs": [
-            "https://discord.gg/VYpsPZMRf5",
-            "https://github.com/kaizerenrique"
-        ]
-    }
-    </script>
+    </head>   
 
     <body class="bg-base-100 min-h-screen">
+
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": "Linhir",
+            "alternateName": "Gremio Linhir",
+            "description": "Gremio de Albion Online ubicado en Fort Sterling (Servidor West). Especializado en recolección, crafteo y contenido PvE/PvP.",
+            "url": "{{ url('/') }}",
+            "logo": "{{ asset('imagenes/escudo_512x512.png') }}",
+            "founder": [
+                {
+                    "@type": "Person",
+                    "name": "Kaizerenrique"
+                },
+                {
+                    "@type": "Person",
+                    "name": "Dmaro"
+                }
+            ],
+            "foundingDate": "2022-09-25",
+            "game": {
+                "@type": "VideoGame",
+                "name": "Albion Online",
+                "gamePlatform": "PC, Mobile",
+                "server": "West"
+            },
+            "address": {
+                "@type": "PostalAddress",
+                "addressLocality": "Fort Sterling",
+                "addressCountry": "Albion (Game World)"
+            },
+            "member": [
+                {
+                    "@type": "Person",
+                    "roleName": "Guild Master"
+                }
+            ],
+            "knowsAbout": [
+                "Albion Online",
+                "Guild Management",
+                "PVP",
+                "Farming",
+                "Crafting",
+                "Gathering"
+            ],
+            "sameAs": [
+                "https://discord.gg/VYpsPZMRf5",
+                "https://github.com/kaizerenrique"
+            ]
+        }
+        </script>
         <!-- Nav -->
         @livewire('componentes.navegacion')
 
