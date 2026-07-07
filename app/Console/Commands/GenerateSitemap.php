@@ -33,13 +33,7 @@ class GenerateSitemap extends Command
         $sitemap->add(Url::create('/')
             ->setPriority(1.0)
             ->setChangeFrequency(Url::CHANGE_FREQUENCY_WEEKLY)
-            ->setLastModificationDate(now()));
-
-        // Página HRL - alta prioridad (asumiendo que es contenido importante)
-        $sitemap->add(Url::create('/hrl')
-            ->setPriority(0.9)
-            ->setChangeFrequency(Url::CHANGE_FREQUENCY_MONTHLY)
-            ->setLastModificationDate(now()));
+            ->setLastModificationDate(now()));      
 
         // Páginas de autenticación - baja prioridad (no son contenido principal)
         $sitemap->add(Url::create('/login')
