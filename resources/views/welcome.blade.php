@@ -34,19 +34,16 @@
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
 
         <!-- Styles / Scripts -->
-        <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
         <!-- Styles -->
         @livewireStyles
 
-        <!-- ============================================ -->
-        <!-- DATOS ESTRUCTURADOS JSON-LD PARA MOTORES DE IA -->
-        <!-- ============================================ -->
+        <!-- Datos estructurados JSON-LD para SEO e IA -->
         <script type="application/ld+json">
         {
-            "@context": "https://schema.org",
-            "@type": "Organization",
+            "@@context": "https://schema.org",
+            "@@type": "Organization",
             "name": "Linhir",
             "alternateName": "Gremio Linhir",
             "description": "Gremio de Albion Online ubicado en Fort Sterling (Servidor West). Especializado en recolección, crafteo y contenido PvE/PvP.",
@@ -74,8 +71,7 @@
             ]
         }
         </script>
-        <!-- FIN JSON-LD -->
-        <!-- ============================================ -->
+
     </head>   
 
     <body class="bg-base-100 min-h-screen">        
