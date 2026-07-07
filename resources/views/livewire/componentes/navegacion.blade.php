@@ -11,11 +11,11 @@
 
             <!-- Menú desktop -->
             <div class="hidden md:flex space-x-8">
-                <a href="#hero" class="text-content-light hover:text-content-accent transition-colors">Inicio</a>
-                <a href="#team" class="text-content-light hover:text-content-accent transition-colors">Equipo</a>
-                <a href="#nosotros" class="text-content-light hover:text-content-accent transition-colors">Nosotros</a>
-                <a href="#musica" class="text-content-light hover:text-content-accent transition-colors">Música</a>
-                <a href="#reclutamiento" class="text-content-light hover:text-content-accent transition-colors">Reclutamiento</a>
+                <a href="/#hero" class="text-content-light hover:text-content-accent transition-colors">Inicio</a>
+                <a href="/#team" class="text-content-light hover:text-content-accent transition-colors">Equipo</a>
+                <a href="/#nosotros" class="text-content-light hover:text-content-accent transition-colors">Nosotros</a>
+                <a href="/#musica" class="text-content-light hover:text-content-accent transition-colors">Música</a>
+                <a href="/#reclutamiento" class="text-content-light hover:text-content-accent transition-colors">Reclutamiento</a>
                 
                 <!-- Menú Calculadora Desktop -->
                 <div class="relative" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false">
@@ -77,11 +77,11 @@
              x-transition:leave-start="opacity-100 scale-100"
              x-transition:leave-end="opacity-0 scale-95">
             <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                <a href="#hero" class="block text-content-light hover:text-content-accent px-3 py-2">Inicio</a>
-                <a href="#team" class="block text-content-light hover:text-content-accent px-3 py-2">Equipo</a>
-                <a href="#musica" class="block text-content-light hover:text-content-accent px-3 py-2">Música</a>
-                <a href="#nosotros" class="block text-content-light hover:text-content-accent px-3 py-2">Nosotros</a>
-                <a href="#reclutamiento" class="block text-content-light hover:text-content-accent px-3 py-2">Reclutamiento</a>
+                <a href="/#hero" class="block text-content-light hover:text-content-accent px-3 py-2">Inicio</a>
+                <a href="/#team" class="block text-content-light hover:text-content-accent px-3 py-2">Equipo</a>
+                <a href="/#musica" class="block text-content-light hover:text-content-accent px-3 py-2">Música</a>
+                <a href="/#nosotros" class="block text-content-light hover:text-content-accent px-3 py-2">Nosotros</a>
+                <a href="/#reclutamiento" class="block text-content-light hover:text-content-accent px-3 py-2">Reclutamiento</a>
                 
                 <!-- Menú Calculadora Mobile -->
                 <div class="px-3 py-2">
