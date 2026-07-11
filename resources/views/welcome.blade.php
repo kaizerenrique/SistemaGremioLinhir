@@ -92,6 +92,10 @@
             @livewire('componentes.team')
             <!-- / Team -->
 
+            <!-- Últimas noticias del blog -->
+            @livewire('componentes.latest-posts')
+            <!-- / Últimas noticias -->
+
             <!-- CTA -->
             @livewire('componentes.cta')
             <!-- / CTA -->
