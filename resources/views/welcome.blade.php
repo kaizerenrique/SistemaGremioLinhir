@@ -90,15 +90,15 @@
 
             <!-- Team -->
             @livewire('componentes.team')
-            <!-- / Team -->
-
-            <!-- Últimas noticias del blog -->
-            @livewire('componentes.latest-posts')
-            <!-- / Últimas noticias -->
+            <!-- / Team -->           
 
             <!-- CTA -->
             @livewire('componentes.cta')
             <!-- / CTA -->
+
+            <!-- Últimas noticias del blog -->
+            @livewire('componentes.latest-posts')
+            <!-- / Últimas noticias -->
 
             <!-- Nosotros -->
             @livewire('componentes.nosotros')

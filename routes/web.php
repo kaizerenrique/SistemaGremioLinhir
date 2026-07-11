@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SocialiteAuthController;
+use App\Livewire\Blog\BlogIndex;
+use App\Livewire\Blog\BlogShow;
 
 Route::get('/', function () {
     return view('welcome');
@@ -52,3 +54,6 @@ Route::middleware([
         return view('paginas.personajesregistro');
     })->name('personajesregistro');
 });
+
+Route::get('/blog', BlogIndex::class)->name('blog.index');
+Route::get('/blog/{id}', BlogShow::class)->name('blog.show');
