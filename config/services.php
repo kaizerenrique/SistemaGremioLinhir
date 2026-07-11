@@ -49,5 +49,10 @@ return [
         'servidor_discord_linhir' => env('DISCORD_SERVER_LINHIR_TOKEN'),        
     ],
 
+    'blogger' => [
+        'key' => env('BLOGGER_API_KEY'),
+        'blog_id' => env('BLOGGER_BLOG_ID'),
+    ],
+
 
 ];
