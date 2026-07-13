@@ -38,6 +38,8 @@
 *   **🎂 Sistema de Cumpleaños**: Registra fechas de cumpleaños de los miembros y envía un mensaje automático con webhook a Discord el día indicado.
 *   **🏦 Módulo Bancario**: Lleva un registro de ingresos y egresos de los personajes, con filtros y saldo actualizado.
 *   **🧮 Calculadora de Cultivos**: Herramienta para jugadores que calcula el retorno de inversión (profit) de cultivos según premium, foco, bonificaciones y precios de mercado.
+*   **📝 Blog Integrado con Blogger**: Publica noticias, guías y novedades usando la plataforma Blogger (Google). Los artículos se muestran en la web de Linhir con el mismo diseño y paleta de colores, manteniendo la independencia del sistema principal. El contenido se cachea para un rendimiento óptimo.
+*   **🔔 Notificaciones Automáticas a Discord**: Un comando programado detecta automáticamente cuando se publica un nuevo artículo en el blog y envía una notificación con embed al canal de Discord del gremio, informando a la comunidad al instante.
 
 ---
 
@@ -52,6 +54,7 @@
 *   **HTTP Client**: GuzzleHttp para consumir APIs externas.
 *   **Mapa del Sitio**: Spatie Laravel-Sitemap.
 *   **Inteligencia Artificial**: Integración opcional con Ollama (LLaMA3) para asistente interno.
+*   **Blog**: API de Blogger v3 (Google) con caché local.
 
 ---
 
@@ -83,6 +86,13 @@
 ### 5. Calculadora de Cultivos
 *   Herramienta útil para jugadores que calcula el retorno de inversión (profit) de cultivos según premium, foco, bonificaciones y precio de mercado de semillas y productos.
 
+### 6. Blog (Integración con Blogger)
+*   **Publicación desde Blogger**: Administra el contenido desde el panel de Blogger, aprovechando su editor y gestión de imágenes.
+*   **Visualización en la Web**: Los artículos se muestran en `/blog` con un diseño responsive, listado con paginación "Cargar más" y detalle completo.
+*   **Caché Inteligente**: Las llamadas a la API de Blogger se cachean para reducir la latencia y el consumo de cuota de la API.
+*   **SEO Dinámico**: Cada artículo genera metaetiquetas Open Graph y Twitter Cards automáticamente a partir del título, descripción e imagen destacada.
+*   **Sitemap Automático**: Las URLs del blog se incluyen en el sitemap semanal para mejorar el posicionamiento en buscadores.
+
 ---
 
 ## ⏱️ Comandos Programados
@@ -98,6 +108,7 @@ El sistema utiliza el programador de tareas de Laravel (Cron) para mantener los 
 | `app:server_check` | Cada 15 segundos (Rango horario) | Verifica el estado del servidor y dispara alertas en Discord. |
 | `discord:birthday-notification` | Diario (10:00 AM) | Envía un mensaje de felicitación por cumpleaños al canal de Discord. |
 | `sitemap:generate` | Semanal | Genera el archivo `sitemap.xml` para SEO. |
+| `blog:check-new-posts` | Cada 30 minutos | Verifica si hay nuevos posts en Blogger y envía notificación a Discord. |
 
 ---
 
@@ -117,7 +128,7 @@ El proyecto sigue el estándar de Laravel, con una clara separación de responsa
 
 ---
 
-## 👥 Autores
+## 👥 Autor
 
 *   **Kaizerenrique** - *Desarrollador Principal / Fundador* - [GitHub](https://github.com/kaizerenrique)
 
