@@ -10,6 +10,7 @@ use App\Console\Commands\UpdateGoldPrice;
 use App\Console\Commands\GenerateSitemap;
 use App\Console\Commands\DiscordBirthdayNotification;
 use App\Console\Commands\UpdateEspecialidadesSemanales;
+use App\Console\Commands\CheckNewBlogPosts;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -46,3 +47,8 @@ Schedule::command(DiscordBirthdayNotification::class)->dailyAt('10:00')->descrip
 
 // Ejecuta para rapas de especialidad
 Schedule::command(UpdateEspecialidadesSemanales::class)->hourly();
+
+Schedule::command(CheckNewBlogPosts::class)
+    ->everyThirtyMinutes() // Puede ser cada 15, 30 o 60 minutos según tu frecuencia de publicación
+    ->withoutOverlapping()
+    ->onOneServer();

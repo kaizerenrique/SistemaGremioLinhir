@@ -46,12 +46,14 @@ return [
         'avatar_default_extension' => env('DISCORD_EXTENSION_DEFAULT', 'png'), // only pick from jpg, png, webp
 
         'bot_token' => env('DISCORD_BOT_TOKEN'),
-        'servidor_discord_linhir' => env('DISCORD_SERVER_LINHIR_TOKEN'),        
+        'servidor_discord_linhir' => env('DISCORD_SERVER_LINHIR_TOKEN'),
+        // Notificaciones en discord para el blog de noticias
+        'blog_webhook' => env('DISCORD_BLOG_WEBHOOK_URL'),
     ],
 
     'blogger' => [
         'key' => env('BLOGGER_API_KEY'),
-        'blog_id' => env('BLOGGER_BLOG_ID'),
+        'blog_id' => env('BLOGGER_BLOG_ID'),        
     ],
 
 
