@@ -95,7 +95,8 @@ class CheckNewBlogPosts extends Command
         $title = $post['title'];
         $content = Str::limit(strip_tags($post['content']), 500);
         $published = Carbon::parse($post['published'])->format('d/m/Y H:i');
-        $postUrl = $post['url'] ?? route('blog.show', $post['id']); // Blogger devuelve 'url' en el item
+        //$postUrl = $post['url'] ?? route('blog.show', $post['id']); // Blogger devuelve 'url' en el item
+        $postUrl = route('blog.show', $post['id']);
         $imageUrl = $post['images'][0]['url'] ?? null;
 
         // Construir embed
