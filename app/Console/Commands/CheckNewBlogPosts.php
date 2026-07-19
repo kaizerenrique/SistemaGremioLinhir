@@ -92,6 +92,9 @@ class CheckNewBlogPosts extends Command
             return;
         }
 
+        // Obtener la mención desde .env (por defecto '@everyone')
+        $mention = config('services.discord.blog_mention', '@everyone');
+
         $title = $post['title'];
         $content = Str::limit(strip_tags($post['content']), 500);
         $published = Carbon::parse($post['published'])->format('d/m/Y H:i');
@@ -135,6 +138,7 @@ class CheckNewBlogPosts extends Command
         $payload = [
             'username' => 'Linhir Blog Notifier',
             'avatar_url' => asset('imagenes/linhir_escudo_180.png'),
+            'content' => $mention, // Añadimos la mención
             'embeds' => [$embed],
         ];
 

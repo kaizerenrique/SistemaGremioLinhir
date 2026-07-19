@@ -49,6 +49,7 @@ return [
         'servidor_discord_linhir' => env('DISCORD_SERVER_LINHIR_TOKEN'),
         // Notificaciones en discord para el blog de noticias
         'blog_webhook' => env('DISCORD_BLOG_WEBHOOK_URL'),
+        'blog_mention' => env('DISCORD_BLOG_MENTION', '@everyone'),
     ],
 
     'blogger' => [
