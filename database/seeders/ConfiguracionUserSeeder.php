@@ -35,7 +35,7 @@ class ConfiguracionUserSeeder extends Seeder
         $permission = Permission::create(['name' => 'Eliminar Usuarios'])->syncRoles([$admin, $oficial, $suboficial]);
         
         
-        $useradmin = User::where('email','kayserenrique@gmail.com')->first();
+        $useradmin = User::where('email','admin@admin.com')->first();
 
         if ($useradmin) {
             $useradmin->delete();

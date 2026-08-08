@@ -53,6 +53,14 @@ Route::middleware([
     Route::get('/registro_de_personaje', function () {
         return view('paginas.personajesregistro');
     })->name('personajesregistro');
+
+    Route::get('/battles', function () {
+        return view('paginas.battles');
+    })->name('battles.index');
+
+    Route::get('/battles/{id}', function ($id) {
+        return view('paginas.battle-detail', ['id' => $id]);
+    })->name('battles.show');
 });
 
 Route::get('/blog', BlogIndex::class)->name('blog.index');

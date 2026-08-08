@@ -52,3 +52,10 @@ Schedule::command(CheckNewBlogPosts::class)
     ->everyThirtyMinutes() // Puede ser cada 15, 30 o 60 minutos según tu frecuencia de publicación
     ->withoutOverlapping()
     ->onOneServer();
+
+// NUEVA TAREA: Sincronización de batallas recientes de Linhir
+Schedule::command('app:sync-battles --range=day --limit=50')
+    ->everyThirtyMinutes() // Cada 30 minutos (puedes cambiarlo a hourly)
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->description('Sincronizar batallas recientes de Linhir');

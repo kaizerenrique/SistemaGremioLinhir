@@ -2,84 +2,74 @@
 
 namespace App\Jobs;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Bus\Batchable;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
 use App\Models\Battle;
-use App\Models\Alliance;
-use App\Models\Guild;
-use App\Models\BattleParticipant;
 use App\Models\KillEvent;
+use App\Models\BattleParticipant;
 use App\Models\KillEventEquipment;
+use App\Models\Guild;
+use App\Models\Alliance;
 use App\Models\Item;
+use App\Traits\RegistraGremios;
 use Carbon\Carbon;
 
 class ProcessBattle implements ShouldQueue
 {
-    use Batchable, Queueable, Dispatchable, InteractsWithQueue, SerializesModels; 
+    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels, RegistraGremios;
 
-    public $battleId;
-    public $timeout = 300; // 5 minutos máximo
-    public $tries = 3; // Establecer el número máximo de intentos    
-    public $backoff = 60; // También puedes definir el tiempo de espera entre reintentos (en segundos)
+    protected $battleId;
 
-    /**
-     * Create a new job instance.
-     */
     public function __construct($battleId)
     {
         $this->battleId = $battleId;
     }
 
-    /**
-     * Execute the job.
-     */
-    public function handle(): void
+    public function handle()
     {
-        // Obtener detalle de la batalla
-        $detailUrl = "https://gameinfo.albiononline.com/api/gameinfo/battles/{$this->battleId}";
-        $response = Http::timeout(60)->get($detailUrl);
+        $battleId = $this->battleId;
 
+        // 1. Obtener detalle de la batalla
+        $response = Http::timeout(60)->get("https://gameinfo.albiononline.com/api/gameinfo/battles/{$battleId}");
         if (!$response->successful()) {
-            // Reintentar después de 5 minutos si falla
-            $this->release(300);
+            $this->fail("No se pudo obtener el detalle de la batalla $battleId");
             return;
         }
 
         $data = $response->json();
         $this->storeBattle($data);
 
-        // Obtener eventos de la batalla
+        // 2. Obtener eventos de la batalla (kills)
         $offset = 0;
         $limit = 51;
+        $chunk = [];
+        $events = [];
         do {
-            $eventsUrl = "https://gameinfo.albiononline.com/api/gameinfo/events/battle/{$this->battleId}?offset=$offset&limit=$limit";
-            $eventsResponse = Http::timeout(60)->get($eventsUrl);
-
-            if (!$eventsResponse->successful()) {
+            $eventsUrl = "https://gameinfo.albiononline.com/api/gameinfo/events/battle/{$battleId}?offset=$offset&limit=$limit";
+            $eventsResponse = Http::timeout(90)->retry(2, 5000)->get($eventsUrl);
+            if ($eventsResponse->successful()) {
+                $chunk = $eventsResponse->json();
+                $events = array_merge($events, $chunk);
+                $offset += $limit;
+            } else {
                 break;
             }
+        } while (count($chunk) === $limit);
 
-            $events = $eventsResponse->json();
-            if (empty($events)) {
-                break;
-            }
-
-            foreach ($events as $event) {
-                $this->storeKillEvent($event, $this->battleId);
-            }
-
-            $offset += $limit;
-        } while (count($events) === $limit);
+        // 3. Guardar eventos
+        foreach ($events as $event) {
+            $this->storeKillEvent($event, $battleId);
+        }
     }
 
-        private function storeBattle(array $data)
+    private function storeBattle(array $data)
     {
-        // Guardar alianzas y gremios
+        // 1. Registrar alianzas y gremios desde la lista principal
         foreach ($data['alliances'] ?? [] as $id => $allianceData) {
             Alliance::updateOrCreate(['id' => $id], ['name' => $allianceData['name']]);
         }
@@ -93,7 +83,19 @@ class ProcessBattle implements ShouldQueue
             );
         }
 
-        // Guardar batalla
+        // 2. Registrar gremios de los jugadores que puedan no estar en la lista principal
+        foreach ($data['players'] ?? [] as $playerId => $playerData) {
+            if (!empty($playerData['guildId'])) {
+                $this->registrarGremio(
+                    $playerData['guildId'],
+                    $playerData['guildName'] ?? 'Desconocido',
+                    $playerData['allianceId'] ?? null,
+                    $playerData['allianceName'] ?? null
+                );
+            }
+        }
+
+        // 3. Guardar batalla
         Battle::updateOrCreate(
             ['id' => $data['id']],
             [
@@ -106,7 +108,7 @@ class ProcessBattle implements ShouldQueue
             ]
         );
 
-        // Guardar participantes (resumen)
+        // 4. Guardar participantes (jugadores)
         foreach ($data['players'] ?? [] as $playerId => $playerData) {
             BattleParticipant::updateOrCreate(
                 [
@@ -127,7 +129,29 @@ class ProcessBattle implements ShouldQueue
 
     private function storeKillEvent(array $event, int $battleId)
     {
-        // Guardar evento
+        // Registrar gremios de asesino y víctima
+        $killerGuildId = $event['Killer']['GuildId'] ?? null;
+        $victimGuildId = $event['Victim']['GuildId'] ?? null;
+
+        if ($killerGuildId) {
+            $this->registrarGremio(
+                $killerGuildId,
+                $event['Killer']['GuildName'] ?? 'Desconocido',
+                $event['Killer']['AllianceId'] ?? null,
+                $event['Killer']['AllianceName'] ?? null
+            );
+        }
+
+        if ($victimGuildId) {
+            $this->registrarGremio(
+                $victimGuildId,
+                $event['Victim']['GuildName'] ?? 'Desconocido',
+                $event['Victim']['AllianceId'] ?? null,
+                $event['Victim']['AllianceName'] ?? null
+            );
+        }
+
+        // Guardar evento de asesinato
         $killEvent = KillEvent::updateOrCreate(
             ['id' => $event['EventId']],
             [
@@ -151,26 +175,36 @@ class ProcessBattle implements ShouldQueue
         );
 
         // Equipamiento del asesino
-        if (isset($event['Killer']['Equipment'])) {
-            foreach ($event['Killer']['Equipment'] as $slot => $item) {
-                if ($item) {
-                    $this->storeEquipment($killEvent->id, 'killer', $slot, $item);
-                }
-            }
-        }
+    //    if (isset($event['Killer']['Equipment'])) {
+    //        foreach ($event['Killer']['Equipment'] as $slot => $item) {
+    //            if ($item) {
+    //                $this->storeEquipment($killEvent->id, 'killer', $slot, $item);
+    //            }
+    //        }
+    //    }
 
         // Equipamiento de la víctima
-        if (isset($event['Victim']['Equipment'])) {
-            foreach ($event['Victim']['Equipment'] as $slot => $item) {
-                if ($item) {
-                    $this->storeEquipment($killEvent->id, 'victim', $slot, $item);
-                }
-            }
-        }
+    //    if (isset($event['Victim']['Equipment'])) {
+    //        foreach ($event['Victim']['Equipment'] as $slot => $item) {
+    //            if ($item) {
+    //                $this->storeEquipment($killEvent->id, 'victim', $slot, $item);
+    //            }
+    //        }
+    //    }
 
-        // Actualizar participantes con daño/curación (desde Participants)
+        // Participantes y estadísticas de daño
         if (isset($event['Participants'])) {
             foreach ($event['Participants'] as $participant) {
+                // Registrar gremio del participante si no existe
+                if (!empty($participant['GuildId'])) {
+                    $this->registrarGremio(
+                        $participant['GuildId'],
+                        $participant['GuildName'] ?? 'Desconocido',
+                        $participant['AllianceId'] ?? null,
+                        $participant['AllianceName'] ?? null
+                    );
+                }
+
                 BattleParticipant::updateOrCreate(
                     [
                         'battle_id' => $battleId,
@@ -193,32 +227,33 @@ class ProcessBattle implements ShouldQueue
     {
         $uniqueName = $itemData['Type'];
 
-        // Obtener o crear ítem (solo si no existe)
+        // Verificar si el ítem ya existe
         $item = Item::firstOrNew(['unique_name' => $uniqueName]);
-        if (!$item->exists) {
-            // Consultar datos del ítem a la API
-            try {
-                $itemResponse = Http::timeout(30)->get("https://gameinfo.albiononline.com/api/gameinfo/items/$uniqueName/data");
-                if ($itemResponse->successful()) {
-                    $itemInfo = $itemResponse->json();
-                    $item->fill([
-                        'item_type' => $itemInfo['itemType'] ?? null,
-                        'tier' => $itemInfo['tier'] ?? null,
-                        'enchantment_level' => $itemInfo['enchantmentLevel'] ?? 0,
-                        'sprite_name' => $itemInfo['spriteName'] ?? null,
-                        'localized_names' => $itemInfo['localizedNames'] ?? null,
-                        'localized_descriptions' => $itemInfo['localizedDescriptions'] ?? null,
-                        'image_url' => null,
-                        'last_updated' => now(),
-                    ]);
-                }
-            } catch (\Exception $e) {
-                // Si falla, solo guardamos el uniqueName
-            }
-            $item->save();
-        }
         
-        // Guardar equipamiento en la tabla relacionada
+
+        if (!$item->exists) {
+            // Obtener datos del ítem desde la API
+            $response = Http::get("https://gameinfo.albiononline.com/api/gameinfo/items/$uniqueName/data");
+            if ($response->successful()) {
+                $info = $response->json();
+                $item->fill([
+                    'item_type' => $info['itemType'] ?? null,
+                    'tier' => $info['tier'] ?? null,
+                    'enchantment_level' => $info['enchantmentLevel'] ?? 0,
+                    'sprite_name' => $info['spriteName'] ?? null,
+                    'localized_names' => $info['localizedNames'] ?? null,
+                    'localized_descriptions' => $info['localizedDescriptions'] ?? null,
+                    'image_url' => null,
+                    'last_updated' => now(),
+                ]);
+                $item->save();
+            } else {
+                // Si falla, guardamos solo el uniqueName para no perder la referencia
+                $item->save();
+            }
+        }
+
+        // Guardar equipamiento
         KillEventEquipment::create([
             'kill_event_id' => $killEventId,
             'player_role' => $role,
