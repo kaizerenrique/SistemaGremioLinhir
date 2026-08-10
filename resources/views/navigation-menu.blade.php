@@ -22,6 +22,9 @@
                         <x-nav-link href="{{ route('battles.index') }}" :active="request()->routeIs('battles.index')">
                             {{ __('Batallas') }}
                         </x-nav-link>
+                        <x-nav-link href="{{ route('discord.index') }}" :active="request()->routeIs('discord.index')">
+                            {{ __('Discord') }}
+                        </x-nav-link>
                         <x-nav-link href="{{ route('bancodegremio') }}" :active="request()->routeIs('bancodegremio')">
                             {{ __('Banco Gremial') }}
                         </x-nav-link>     

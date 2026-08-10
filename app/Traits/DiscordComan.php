@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use App\Models\AuthProvider;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+
 
 trait DiscordComan
 {
@@ -229,6 +231,147 @@ trait DiscordComan
         }
     }
 
+    /**
+     * Obtiene información general del servidor (nombre, icono, región, etc.)
+     * Cache: 1 hora.
+     */
+    public function getGuildInfo()
+    {
+        $guildId = config('services.discord.servidor_discord_linhir');
+        $cacheKey = "discord_guild_info_{$guildId}";
+        return Cache::remember($cacheKey, 3600, function () use ($guildId) {
+            $token = config('services.discord.bot_token');
+            $response = Http::withHeaders([
+                'Authorization' => 'Bot ' . $token,
+            ])->get("https://discord.com/api/v10/guilds/{$guildId}");
+
+            if ($response->successful()) {
+                return $response->json();
+            }
+            return null;
+        });
+    }
+
+    /**
+     * Obtiene los canales del servidor (texto, voz, categorías).
+     * Cache: 1 hora.
+     */
+    public function getGuildChannels()
+    {
+        $guildId = config('services.discord.servidor_discord_linhir');
+        $cacheKey = "discord_guild_channels_{$guildId}";
+        return Cache::remember($cacheKey, 3600, function () use ($guildId) {
+            $token = config('services.discord.bot_token');
+            $response = Http::withHeaders([
+                'Authorization' => 'Bot ' . $token,
+            ])->get("https://discord.com/api/v10/guilds/{$guildId}/channels");
+
+            if ($response->successful()) {
+                return $response->json();
+            }
+            return [];
+        });
+    }
+
+    /**
+     * Obtiene los roles del servidor.
+     * Cache: 1 hora.
+     */
+    public function getGuildRoles()
+    {
+        $guildId = config('services.discord.servidor_discord_linhir');
+        $cacheKey = "discord_guild_roles_{$guildId}";
+        return Cache::remember($cacheKey, 3600, function () use ($guildId) {
+            $token = config('services.discord.bot_token');
+            $response = Http::withHeaders([
+                'Authorization' => 'Bot ' . $token,
+            ])->get("https://discord.com/api/v10/guilds/{$guildId}/roles");
+
+            if ($response->successful()) {
+                return $response->json();
+            }
+            return [];
+        });
+    }
+
+    /**
+     * Obtiene una página de miembros (hasta 1000).
+     * @param int $limit (máx 1000)
+     * @param string|null $after (ID de usuario para paginación)
+     * @return array ['members' => [...], 'next' => $nextUserId]
+     */
+    private function getGuildMembersPage($limit = 100, $after = null)
+    {
+        $token = config('services.discord.bot_token');
+        $guildId = config('services.discord.servidor_discord_linhir');
+        $query = http_build_query([
+            'limit' => min($limit, 1000),
+            'after' => $after,
+        ]);
+        $response = Http::withHeaders([
+            'Authorization' => 'Bot ' . $token,
+        ])->get("https://discord.com/api/v10/guilds/{$guildId}/members?{$query}");
+
+        if ($response->successful()) {
+            $members = $response->json();
+            $next = null;
+            if (count($members) === $limit) {
+                $last = end($members);
+                $next = $last['user']['id'] ?? null;
+            }
+            // Procesar cada miembro
+            $registeredIds = AuthProvider::where('provider', 'discord')->pluck('provider_id')->toArray();
+            $processed = array_map(function ($member) use ($registeredIds) {
+                return [
+                    'user_id' => $member['user']['id'],
+                    'username' => $member['user']['username'],
+                    'discriminator' => $member['user']['discriminator'] ?? '0',
+                    'nickname' => $member['nick'] ?? $member['user']['username'],
+                    'roles' => $member['roles'],
+                    'is_registered' => in_array($member['user']['id'], $registeredIds),
+                    'avatar' => $member['user']['avatar'] ?? null,
+                ];
+            }, $members);
+            return [
+                'members' => $processed,
+                'next' => $next,
+            ];
+        }
+        return ['members' => [], 'next' => null];
+    }
+
+    /**
+     * Obtiene TODOS los miembros del servidor (recursivo) y los cachea.
+     * Cache: 5 minutos.
+     */
+    public function getGuildAllMembers()
+    {
+        $guildId = config('services.discord.servidor_discord_linhir');
+        $cacheKey = "discord_guild_all_members_{$guildId}";
+        return Cache::remember($cacheKey, 300, function () {
+            $all = [];
+            $after = null;
+            $limit = 100; // tamaño de página
+            do {
+                $result = $this->getGuildMembersPage($limit, $after);
+                $all = array_merge($all, $result['members']);
+                $after = $result['next'];
+            } while ($after !== null);
+            return $all;
+        });
+    }
+
+    /**
+     * Limpia la caché de miembros (útil después de cambios).
+     */
+    public function clearDiscordCache()
+    {
+        $guildId = config('services.discord.servidor_discord_linhir');
+        Cache::forget("discord_guild_all_members_{$guildId}");
+        Cache::forget("discord_guild_info_{$guildId}");
+        Cache::forget("discord_guild_channels_{$guildId}");
+        Cache::forget("discord_guild_roles_{$guildId}");
+    }
 
 
 

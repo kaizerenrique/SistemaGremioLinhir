@@ -61,6 +61,10 @@ Route::middleware([
     Route::get('/battles/{id}', function ($id) {
         return view('paginas.battle-detail', ['id' => $id]);
     })->name('battles.show');
+
+    Route::get('/admin/discord', function () {
+        return view('paginas.discord');
+    })->name('discord.index');
 });
 
 Route::get('/blog', BlogIndex::class)->name('blog.index');
