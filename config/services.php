@@ -50,6 +50,8 @@ return [
         // Notificaciones en discord para el blog de noticias
         'blog_webhook' => env('DISCORD_BLOG_WEBHOOK_URL'),
         'blog_mention' => env('DISCORD_BLOG_MENTION', '@everyone'),
+        //rol para el bot de tareas
+        'officer_role_id' => env('DISCORD_OFFICER_ROLE_ID'),
     ],
 
     'blogger' => [

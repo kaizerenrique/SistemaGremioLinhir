@@ -11,6 +11,7 @@ use App\Console\Commands\GenerateSitemap;
 use App\Console\Commands\DiscordBirthdayNotification;
 use App\Console\Commands\UpdateEspecialidadesSemanales;
 use App\Console\Commands\CheckNewBlogPosts;
+use App\Console\Commands\SyncDiscordRoles;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -59,3 +60,9 @@ Schedule::command('app:sync-battles --range=day --limit=50')
     ->withoutOverlapping()
     ->onOneServer()
     ->description('Sincronizar batallas recientes de Linhir');
+
+Schedule::command(SyncDiscordRoles::class)
+    ->hourly() // o cada 30 minutos si lo deseas
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->description('Sincroniza roles de Discord con la web');

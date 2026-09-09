@@ -48,6 +48,13 @@ class ConfiguracionUserSeeder extends Seeder
             'email_verified_at' => '2025-08-05 14:14:14'
         ])->assignRole('Administrador');
 
+        $officer = Role::firstOrCreate(['name' => 'Oficial']);
+        Permission::firstOrCreate(['name' => 'review_reports']);
+        Permission::firstOrCreate(['name' => 'manage_tasks']);
+        Permission::firstOrCreate(['name' => 'manage_points']);
+
+        $officer->syncPermissions(['review_reports', 'manage_tasks', 'manage_points']);
+
 
     }
 }
