@@ -65,6 +65,10 @@ Route::middleware([
     Route::get('/admin/discord', function () {
         return view('paginas.discord');
     })->name('discord.index');
+
+    Route::get('/admin/tasks', function () {
+        return view('paginas.tasks-management');
+    })->name('tasks.management');
 });
 
 Route::get('/blog', BlogIndex::class)->name('blog.index');
