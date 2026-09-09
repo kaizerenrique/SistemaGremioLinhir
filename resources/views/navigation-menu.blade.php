@@ -18,7 +18,10 @@
                     @if (@Auth::user()->hasPermissionTo('Ver Usuarios'))
                         <x-nav-link href="{{ route('linhir') }}" :active="request()->routeIs('linhir')">
                             {{ __('Linhir') }}
-                        </x-nav-link>                        
+                        </x-nav-link> 
+                        <x-nav-link href="{{ route('ranking') }}" :active="request()->routeIs('ranking')">
+                            {{ __('Ranking') }}
+                        </x-nav-link>                       
                         <x-nav-link href="{{ route('tasks.management') }}" :active="request()->routeIs('tasks.management')">
                             {{ __('Tareas') }}
                         </x-nav-link>                        

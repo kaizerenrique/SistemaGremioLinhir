@@ -69,6 +69,10 @@ Route::middleware([
     Route::get('/admin/tasks', function () {
         return view('paginas.tasks-management');
     })->name('tasks.management');
+
+    Route::get('/ranking', function () {
+        return view('paginas.ranking');
+    })->name('ranking');
 });
 
 Route::get('/blog', BlogIndex::class)->name('blog.index');
