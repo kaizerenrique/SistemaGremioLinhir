@@ -50,7 +50,7 @@ class GenerateSitemap extends Command
             ->setChangeFrequency(Url::CHANGE_FREQUENCY_YEARLY));
         // Añadir posts del blog
         try {
-            $postsData = $blogger->getPosts(null, 500); // Obtener hasta 500 posts
+            $postsData = $blogger->getPostsForSitemap(); // Obtener hasta 500 posts
             if (!empty($postsData['items'])) {
                 foreach ($postsData['items'] as $post) {
                     $sitemap->add(Url::create("/blog/{$post['id']}")
