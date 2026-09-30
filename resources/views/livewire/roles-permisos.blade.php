@@ -222,7 +222,7 @@
                 <p>¿Estás seguro de que deseas eliminar el rol <strong>{{ $roleToDeleteName }}</strong>?</p>
                 <p class="text-sm text-content-light/70">
                     Esta acción no se puede deshacer. 
-                    @if($roleToDeleteId && \Spatie\Permission\Models\Role::find($roleToDeleteId)?->users()->count() > 0)
+                    @if($roleToDeleteId && \App\Models\Role::find($roleToDeleteId)?->users()->count() > 0)
                         <span class="text-error block mt-2">⚠️ Hay usuarios con este rol asignado. Debes reasignarlos primero.</span>
                     @endif
                 </p>

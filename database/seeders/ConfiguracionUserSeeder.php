@@ -5,10 +5,10 @@ namespace Database\Seeders;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\PermissionRegistrar;
 use App\Models\User;
+use App\Models\Role;
 
 class ConfiguracionUserSeeder extends Seeder
 {
@@ -35,10 +35,15 @@ class ConfiguracionUserSeeder extends Seeder
         ];
 
         foreach ($roles as $roleName) {
-            Role::firstOrCreate([
-                'name'       => $roleName,
-                'guard_name' => 'web',
-            ]);
+            Role::firstOrCreate(
+                [
+                    'name'       => $roleName,
+                    'guard_name' => 'web',
+                ],
+                [
+                    'is_system'  => true, // ← sólo se aplica al crear
+                ]
+            );
         }
 
         // ============================================================
