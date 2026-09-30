@@ -27,9 +27,5 @@ class AppServiceProvider extends ServiceProvider
             $event->extendSocialite('discord', \SocialiteProviders\Discord\Provider::class);
         });
 
-        Gate::before(function ($user, $ability) {
-            return null; // deja que Spatie resuelva; solo forzamos que $user no sea null
-        });
-
     }
 }
