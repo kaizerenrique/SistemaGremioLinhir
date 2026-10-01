@@ -3,12 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Permission\Models\Role as SpatieRole;
 
-class Role extends Model
+class Role extends SpatieRole
 {
     /**
-    * Casts para que `is_system` sea siempre boolean
-    * sin importar el driver de base de datos.
+     * Añade el cast de is_system al modelo base de Spatie.
+     * El resto de la funcionalidad (guard_name, permissions(), users(), etc.)
+     * se hereda intacta.
     */
     protected $casts = [
         'is_system' => 'boolean',
