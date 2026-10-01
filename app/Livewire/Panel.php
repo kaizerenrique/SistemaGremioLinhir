@@ -29,26 +29,35 @@ class Panel extends Component
 
     public function render()
     {
-        //revisar si el usuario esta en el servidor de discord
+        // 1. Estado en el servidor de Discord
         $linhir_servidor = $this->checkDiscordMembership();
-        //revisar el valor del oro
+
+        // 2. Último precio del oro
         $oro = GoldPrice::latest('id')->first();
 
-        //comprobar perfiles
-        $perfiles = auth()->user()->personajes()->where('Name', 'like', '%'.$this->buscar.'%')->paginate(6);
-        //contar perfiles
-        $perfilesno = auth()->user()->personajes;
-        $num = count($perfilesno);  
+        // 3. Consulta base reutilizable
+        $baseQuery = auth()->user()->personajes();
 
-        // Verificar si ALGÚN perfil tiene miembro = true (1)
-        $algunoEsMiembro = $perfiles->contains('miembro', true);
-        
+        // 4. Listado paginado (respeta el buscador)
+        $perfiles = (clone $baseQuery)
+            ->where('Name', 'like', '%' . $this->buscar . '%')
+            ->orderByDesc('id')
+            ->paginate(6);
 
-        return view('livewire.panel',[
-            'linhir_servidor' => $linhir_servidor, 
-            'oro' => $oro, 
-            'num' => $num, 
-            'perfiles' => $perfiles, 
+        // 5. Total de personajes del usuario (una sola query COUNT)
+        $num = (clone $baseQuery)->count();
+
+        // 6. ¿Tiene AL MENOS un personaje miembro del gremio?
+        //    Consulta dedicada, no depende de la página actual ni del buscador.
+        $algunoEsMiembro = (clone $baseQuery)
+            ->where('miembro', true)
+            ->exists();
+
+        return view('livewire.panel', [
+            'linhir_servidor' => $linhir_servidor,
+            'oro'             => $oro,
+            'num'             => $num,
+            'perfiles'        => $perfiles,
             'algunoEsMiembro' => $algunoEsMiembro,
         ]);
     }

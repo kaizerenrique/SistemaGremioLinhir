@@ -66,29 +66,40 @@ class Cuentapersonal extends Component
         if (!$this->personaje) {
             return view('livewire.modulo.banco.cuentapersonal', [
                 'transacciones' => [],
-                'saldo' => 0
+                'saldo' => 0,
             ]);
         }
 
+        // Whitelist de campos ordenables (defensa en profundidad)
+        $allowedSortFields = ['created_at', 'tipo', 'monto', 'concepto'];
+        $sortField = in_array($this->sortField, $allowedSortFields, true)
+            ? $this->sortField
+            : 'created_at';
+        $sortDirection = $this->sortDirection === 'asc' ? 'asc' : 'desc';
+
         $query = $this->personaje->movimientosBancarios()
-            ->when($this->search, function ($query) {
-                $query->where('concepto', 'like', '%' . $this->search . '%')
-                      ->orWhere('referencia', 'like', '%' . $this->search . '%')
-                      ->orWhere('autorizado_por', 'like', '%' . $this->search . '%');
+            ->when($this->search, function ($q) {
+                $term = '%' . $this->search . '%';
+                $q->where(function ($sub) use ($term) {
+                    $sub->where('concepto', 'like', $term)
+                        ->orWhere('referencia', 'like', $term)
+                        ->orWhere('autorizado_por', 'like', $term);
+                });
             })
-            ->when($this->tipoFilter, function ($query) {
-                $query->where('tipo', $this->tipoFilter);
+            ->when($this->tipoFilter, function ($q) {
+                $q->where('tipo', $this->tipoFilter);
             });
 
-        $transacciones = $query->orderBy($this->sortField, $this->sortDirection)
+        $transacciones = $query
+            ->orderBy($sortField, $sortDirection)
             ->paginate($this->perPage);
 
-        // Actualizar saldo
+        // Actualizar saldo (siempre sobre el total, no sobre el filtro)
         $this->saldo = $this->personaje->saldoActual();
 
         return view('livewire.modulo.banco.cuentapersonal', [
             'transacciones' => $transacciones,
-            'saldo' => $this->saldo
+            'saldo'         => $this->saldo,
         ]);
     }
 }
