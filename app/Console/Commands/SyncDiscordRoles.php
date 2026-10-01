@@ -6,7 +6,7 @@ use App\Models\User;
 use App\Traits\DiscordComan;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
-use Spatie\Permission\Models\Role;
+use App\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 
 class SyncDiscordRoles extends Command

@@ -25,11 +25,6 @@ class Personaje extends Model
         return $this->hasOne(LifetimeStatistics::class, 'personaje_id');
     }
 
-    public function gatheringStatistics()
-    {
-        return $this->hasOne(GatheringStatistics::class, 'personaje_id');
-    }
-
     public function movimientosBancarios()
     {
         return $this->hasMany(BancoGremial::class);
