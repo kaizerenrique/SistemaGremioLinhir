@@ -11,8 +11,6 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\PasswordGeneratedMail;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
 
 class SocialiteAuthController extends Controller
 {
