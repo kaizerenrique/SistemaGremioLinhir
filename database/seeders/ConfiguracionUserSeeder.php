@@ -107,15 +107,15 @@ class ConfiguracionUserSeeder extends Seeder
                 'Ver Usuarios',
                 'Crear Usuarios',
                 'Editar Usuarios',
-                'Ver Linhir',
                 'Ver Batallas',
+                'Ver Linhir',                
                 'Ver Discord',
                 'review_reports',
+                'Ver Linhir',
             ],
 
             'Linhir' => [
-                'Ver Batallas',
-                'Ver Linhir',
+                'Ver Batallas',              
             ],
 
             'Usuario' => [
