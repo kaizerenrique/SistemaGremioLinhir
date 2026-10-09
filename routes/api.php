@@ -44,6 +44,8 @@ Route::prefix('bot')->middleware(['auth:sanctum', 'ability:read'])->group(functi
     Route::get('/horario', [ApisController::class, 'horario']);
     Route::get('/oro',     [ApisController::class, 'valordeloro']);
     Route::post('/register-character', [IdentityController::class, 'registerCharacter']);
+    Route::post('/sync-registration',  [IdentityController::class, 'syncRegistration']);
+    Route::get('/members', [IdentityController::class, 'listMembers']);
 });
 
 
