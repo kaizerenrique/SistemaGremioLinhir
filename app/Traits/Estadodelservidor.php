@@ -134,15 +134,15 @@ trait Estadodelservidor
             "timestamp" => Carbon::now()->toIso8601String()
         ];
 
-        $response = $client->post($canal_estado_servidor, [
-            'json' => [ 
-                "username" => "Linhir System Monitor",
-                "avatar_url" => $escudo,
-                "embeds" => [$embed] 
-            ]
+        $response = Http::post($canal_estado_servidor, [
+            'json' => [
+                'username'   => 'Linhir System Monitor',
+                'avatar_url' => $escudo,
+                'embeds'     => [$embed],
+            ],
         ]);
 
-        return $response->getBody();
+        return $response->body();
     }
         
 
