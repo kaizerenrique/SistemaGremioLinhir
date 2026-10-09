@@ -10,11 +10,13 @@
                             <path stroke-linecap="round" stroke-linejoin="round"
                                 d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                         </svg>
-                        @if ($oro['price'])
+                        @if ($oro && $oro->price)
                             <h2 class="title-font font-medium text-3xl text-content-light">
-                                {{ number_format($oro['price'], 0, '', '.') }} Plata</h2>
-                            <p class="leading-relaxed">Valor del Oro actual</p>
-                        @else
+                                {{ number_format($oro->price, 0, '', '.') }} Plata
+                            </h2>
+                                <p class="leading-relaxed">Valor del Oro actual</p>
+                            @else
+                                <p class="text-content-light/60 text-sm">Sin datos de oro</p>
                         @endif
 
                     </div>
@@ -27,7 +29,7 @@
                             <circle cx="9" cy="7" r="4"></circle>
                             <path d="M23 21v-2a4 4 0 00-3-3.87m-4-12a4 4 0 010 7.75"></path>
                         </svg>
-                        <h2 class="title-font font-medium text-3xl text-white">{{$num ?? null}} </h2>
+                        <h2 class="title-font font-medium text-3xl text-white">{{ $num ?? null }} </h2>
                         <p class="leading-relaxed">Perfiles</p>
                     </div>
                 </div>
@@ -59,7 +61,7 @@
                         @else
                             <h2 class="title-font font-medium text-3xl text-white">NO</h2>
                         @endif
-                        
+
                         <p class="leading-relaxed">Integrante de Linhir</p>
                     </div>
                 </div>
@@ -110,7 +112,7 @@
                                     </th>
                                     <th
                                         class="border-t-0 px-4 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4 text-left">
-                                        {{ $perfile->Id_albion}}
+                                        {{ $perfile->Id_albion }}
                                     </th>
                                     <th
                                         class="border-t-0 px-4 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4 text-left">
@@ -123,11 +125,12 @@
                                                 NO
                                             </span>
                                         @endif
-                                    </th> 
+                                    </th>
                                     <!-- Acciones -->
                                     <th
                                         class="border-t-0 px-4 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4 text-left">
-                                        <div class="" wire:click="consultaeliminapersonaje('{{ $perfile->id }}')">
+                                        <div class=""
+                                            wire:click="consultaeliminapersonaje('{{ $perfile->id }}')">
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
                                                 fill="currentColor" class="size-6">
                                                 <path fill-rule="evenodd"
@@ -159,7 +162,7 @@
 
     </div>
 
-        <!-- Inicio del Modal para mensaje -->
+    <!-- Inicio del Modal para mensaje -->
     <x-dialog-modal wire:model="confirmarEliminar">
         <x-slot name="title">
             {{ $titulo }}
@@ -190,7 +193,8 @@
                 class="border border-red-700 bg-red-700 text-white rounded-lg px-4 py-2 m-2 transition duration-500 ease select-none hover:bg-red-800 focus:outline-none focus:shadow-outline">
                 {{ __('Cancelar') }}
             </button>
-            <button type="button" wire:click="eliminarPersonaje('{{ $identificador }}')" wire:loading.attr="disabled"
+            <button type="button" wire:click="eliminarPersonaje('{{ $identificador }}')"
+                wire:loading.attr="disabled"
                 class="border border-emerald-700 bg-emerald-700 text-white rounded-lg px-4 py-2 m-2 transition duration-500 ease select-none hover:bg-emerald-800 focus:outline-none focus:shadow-outline">
                 {{ __('Confirmar') }}
             </button>
@@ -210,7 +214,7 @@
         </x-slot>
 
         <x-slot name="footer">
-            
+
             <button type="button" wire:click="$toggle('modalmensaje', false)" wire:loading.attr="disabled"
                 class="border border-emerald-700 bg-emerald-700 text-white rounded-lg px-4 py-2 m-2 transition duration-500 ease select-none hover:bg-emerald-800 focus:outline-none focus:shadow-outline">
                 {{ __('Confirmar') }}
