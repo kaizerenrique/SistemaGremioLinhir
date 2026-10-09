@@ -234,35 +234,68 @@ class IdentityController extends Controller
     }
 
     /**
-     * Devuelve la lista de personajes registrados (con discord_user_id).
-     * Usado por el bot para el reporte diario de integridad.
+     * Devuelve el roster completo del gremio + estado de vinculación con Discord.
+     *
+     * Usado por el bot para el reporte diario de integridad:
+     *   - Personajes del gremio (miembro=true) con su discord_user_id (puede ser null).
+     *   - Personajes ex-miembros que aún están vinculados (para detectar retiros).
      */
     public function listMembers(Request $request): JsonResponse
     {
         $linhirGuildId = config('app.linhir_gremio_id');
 
-        $personajes = Personaje::whereNotNull('discord_user_id')
-            ->get([
-                'id',
-                'Name',
-                'Id_albion',
-                'GuildId',
-                'miembro',
-                'discord_user_id',
-                'birthdate',
-            ]);
+        // ============================================================
+        // 1. Roster completo del gremio (sincronizado por app:integrantes-de-linhir)
+        // ============================================================
+        $guildMembers = Personaje::where('miembro', true)
+            ->orderBy('Name')
+            ->get(['Name', 'Id_albion', 'GuildId', 'discord_user_id']);
+
+        // ============================================================
+        // 2. Todos los vinculados a Discord (incluye ex-miembros)
+        //    Sirve para detectar quién salió del gremio pero sigue vinculado.
+        // ============================================================
+        $linkedToDiscord = Personaje::whereNotNull('discord_user_id')
+            ->orderBy('Name')
+            ->get(['Name', 'Id_albion', 'GuildId', 'miembro', 'discord_user_id']);
+
+        // ============================================================
+        // 3. Categorizar roster
+        // ============================================================
+        $guildRegistered   = $guildMembers->filter(fn($p) => !empty($p->discord_user_id));
+        $guildUnregistered = $guildMembers->filter(fn($p) => empty($p->discord_user_id));
 
         return response()->json([
-            'success' => true,
-            'total'   => $personajes->count(),
-            'members' => $personajes->map(fn($p) => [
+            'success'  => true,
+            'guild_id' => $linhirGuildId,
+
+            'totals' => [
+                'guild_members'      => $guildMembers->count(),
+                'linked_total'       => $linkedToDiscord->count(),
+                'guild_registered'   => $guildRegistered->count(),
+                'guild_unregistered' => $guildUnregistered->count(),
+            ],
+
+            // Integrantes del gremio CON discord_user_id (deberían tener @Linhir)
+            'guild_registered' => $guildRegistered->map(fn($p) => [
                 'name'            => $p->Name,
                 'id_albion'       => $p->Id_albion,
-                'guild_id'        => $p->GuildId,
-                'is_member'       => (bool) $p->miembro,
-                'is_linhir_guild' => $p->GuildId === $linhirGuildId,
                 'discord_user_id' => $p->discord_user_id,
-            ]),
+            ])->values(),
+
+            // Integrantes del gremio SIN discord_user_id (deberían registrarse)
+            'guild_unregistered' => $guildUnregistered->map(fn($p) => [
+                'name'      => $p->Name,
+                'id_albion' => $p->Id_albion,
+            ])->values(),
+
+            // Todos los vinculados (para detectar retiros: miembro=false + aún con rol)
+            'all_linked' => $linkedToDiscord->map(fn($p) => [
+                'name'            => $p->Name,
+                'id_albion'       => $p->Id_albion,
+                'miembro'         => (bool) $p->miembro,
+                'discord_user_id' => $p->discord_user_id,
+            ])->values(),
         ]);
     }
 }
