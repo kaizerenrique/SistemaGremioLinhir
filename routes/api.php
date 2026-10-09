@@ -25,12 +25,24 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 
+/*
+|--------------------------------------------------------------------------
+| BOT LINHIR — API dedicada para bots oficiales
+|--------------------------------------------------------------------------
+| Autenticación: Sanctum Bearer token (cuenta bot existente).
+| Consumida por: Linhir Assistant Bot y futuros bots del sistema.
+|
+| - /api/bot/* se reserva para comandos de bots.
+| - Requiere ability "read" para endpoints de consulta.
+| - Añadir "ability:create" / "ability:update" / "ability:delete"
+|   conforme se implementen comandos de mutación (bot de tareas).
+|--------------------------------------------------------------------------
+*/
 
-// consultar el valos del oro en albion
-Route::get('/oro', [ApisController::class, 'valordeloro'])->middleware('auth:sanctum');
-
-// consultar la hora del servidor 
-Route::get('/horario', [ApisController::class, 'horario'])->middleware('auth:sanctum');
+Route::prefix('bot')->middleware(['auth:sanctum', 'ability:read'])->group(function () {
+    Route::get('/horario', [ApisController::class, 'horario']);
+    Route::get('/oro',     [ApisController::class, 'valordeloro']);
+});
 
 
 //prueba api IA
