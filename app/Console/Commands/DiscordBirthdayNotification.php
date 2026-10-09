@@ -103,6 +103,7 @@ class DiscordBirthdayNotification extends Command
         $count = $birthdayPeople->count();
         $escudo = asset('imagenes/linhir_escudo_180.png');
         $imagendecumpleaños = asset('imagenes/birthday-cake.mp4');
+        $mentionRole = config('app.birthday_mention_role', '@everyone');
         
         $title = $count === 1 
             ? "🎉 ¡HOY ES EL CUMPLEAÑOS DE UN MIEMBRO DEL GREMIO! 🎂" 
@@ -129,7 +130,7 @@ class DiscordBirthdayNotification extends Command
         return [
             "username" => "Linhir - Sistema de Cumpleaños",
             "avatar_url" => $escudo,
-            "content" => "<@&1291436337949446247>", // Menciona a todos
+            "content" => $mentionRole, // Menciona a todos
             "embeds" => [
                 [
                     "title" => $title,
