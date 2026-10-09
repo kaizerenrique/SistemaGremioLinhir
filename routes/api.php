@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\OllamaController;
 use App\Http\Controllers\Api\Bot\TaskController;
 use App\Http\Controllers\Api\Bot\ReportController;
 use App\Http\Controllers\Api\Bot\PointController;
+use App\Http\Controllers\Api\Bot\IdentityController;
 
 // Redirección a proveedor (discord)
 Route::get('/auth/discord', [UserController::class, 'redirect_api']);
@@ -42,6 +43,7 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::prefix('bot')->middleware(['auth:sanctum', 'ability:read'])->group(function () {
     Route::get('/horario', [ApisController::class, 'horario']);
     Route::get('/oro',     [ApisController::class, 'valordeloro']);
+    Route::post('/register-character', [IdentityController::class, 'registerCharacter']);
 });
 
 
