@@ -4,9 +4,6 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Event;
-use \SocialiteProviders\Discord\Provider as DiscordProvider;
-use Illuminate\Support\Facades\Gate;
-use App\Models\User;
 
 class AppServiceProvider extends ServiceProvider
 {
