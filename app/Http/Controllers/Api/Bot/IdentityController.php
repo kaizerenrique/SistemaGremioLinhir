@@ -19,13 +19,19 @@ class IdentityController extends Controller
      *
      * - Linhir solo existe en America (West), no requiere parámetro `server`.
      * - `birthdate` es opcional pero recomendado (para felicitaciones automáticas).
+     *
+     * Modos de operación:
+     *   A) Se envía `character_id` → consulta directa, sin ambigüedad.
+     *   B) Se envía `character_name`:
+     *        - Si hay 1 sola coincidencia exacta → registra directamente.
+     *        - Si hay múltiples coincidencias exactas → rechaza con `ambiguous: true`
+     *          para que el bot muestre un menú de selección al usuario.
      */
     public function registerCharacter(Request $request): JsonResponse
     {
-
-
         $validated = $request->validate([
-            'character_name'          => 'required|string|max:50',
+            'character_id'            => 'nullable|string|max:64|required_without:character_name',
+            'character_name'          => 'nullable|string|max:50|required_without:character_id',
             'discord_user_id'         => 'required|string|max:32',
             'discord_username'        => 'nullable|string|max:100',
             'birthdate'               => 'nullable|date_format:Y-m-d|before_or_equal:today',
@@ -33,41 +39,66 @@ class IdentityController extends Controller
         ]);
 
         // ============================================================
-        // 1. Buscar personaje en la API de Albion
+        // 1. Resolver el personaje: por ID directo o por nombre
         // ============================================================
-        $candidates = $this->buscarpersonajepornombre($validated['character_name']);
+        if (!empty($validated['character_id'])) {
+            // --- Modo A: consulta directa por ID ---
+            $character = $this->consultarpersonaje($validated['character_id']);
 
-        if (empty($candidates)) {
-            return $this->rejected(
-                "No se encontró el personaje **{$validated['character_name']}** "
+            if (!$character || !isset($character->Id)) {
+                return $this->rejected(
+                    'El personaje seleccionado no existe en Albion. '
+                    . 'Intenta la búsqueda de nuevo.'
+                );
+            }
+        } else {
+            // --- Modo B: búsqueda por nombre con validación de ambigüedad ---
+            $candidates = $this->buscarpersonajepornombre($validated['character_name']);
+
+            if (empty($candidates)) {
+                return $this->rejected(
+                    "No se encontró el personaje **{$validated['character_name']}** "
                     . 'en el servidor America (West). Verifica el nombre exacto.'
-            );
-        }
+                );
+            }
 
-        // 2. Coincidencia exacta (case-insensitive)
-        $character = null;
-        foreach ($candidates as $candidate) {
-            if (strcasecmp($candidate->Name, $validated['character_name']) === 0) {
-                $character = $candidate;
-                break;
+            // Filtrar coincidencias exactas (case-insensitive)
+            $exactMatches = array_values(array_filter(
+                $candidates,
+                fn ($c) => strcasecmp($c->Name, $validated['character_name']) === 0
+            ));
+
+            if (count($exactMatches) > 1) {
+                // Múltiples personajes con el mismo nombre → pedir al usuario que elija
+                return response()->json([
+                    'success'   => false,
+                    'ambiguous' => true,
+                    'reason'    => "Se encontraron **" . count($exactMatches) . " personajes** "
+                                 . "con el nombre **{$validated['character_name']}**. "
+                                 . 'Usa `/register search` para elegir el tuyo.',
+                ], 200);
+            }
+
+            if (count($exactMatches) === 1) {
+                $character = $exactMatches[0];
+            } else {
+                // No hay coincidencia exacta pero sí parciales
+                return $this->rejected(
+                    "No se encontró coincidencia exacta para **{$validated['character_name']}**. "
+                    . 'Verifica mayúsculas y ortografía, o usa `/register search` '
+                    . 'para ver todos los resultados.'
+                );
             }
         }
 
-        if (!$character) {
-            return $this->rejected(
-                "No se encontró coincidencia exacta para **{$validated['character_name']}**. "
-                    . 'Verifica mayúsculas y ortografía.'
-            );
-        }
-
         // ============================================================
-        // 3. ¿Pertenece al gremio Linhir?
+        // 2. ¿Pertenece al gremio Linhir?
         // ============================================================
         $linhirGuildId = config('app.linhir_gremio_id');
         $isMember      = ($character->GuildId ?? null) === $linhirGuildId;
 
         // ============================================================
-        // 4. ¿Ya está registrado por otro Discord user?
+        // 3. ¿Ya está registrado por otro Discord user?
         // ============================================================
         $existing = Personaje::where('Id_albion', $character->Id)->first();
 
@@ -78,12 +109,12 @@ class IdentityController extends Controller
         ) {
             return $this->rejected(
                 "El personaje **{$character->Name}** ya está vinculado a otra cuenta de Discord. "
-                    . 'Si crees que es un error, contacta a un oficial.'
+                . 'Si crees que es un error, contacta a un oficial.'
             );
         }
 
         // ============================================================
-        // 5. Persistir vínculo
+        // 4. Persistir vínculo
         // ============================================================
         try {
             $payload = [
@@ -112,7 +143,7 @@ class IdentityController extends Controller
         }
 
         // ============================================================
-        // 6. Respuesta
+        // 5. Respuesta
         // ============================================================
         $characterPayload = [
             'name'       => $character->Name,
@@ -126,6 +157,7 @@ class IdentityController extends Controller
             Log::info('Discord user registró personaje miembro', [
                 'discord_user_id' => $validated['discord_user_id'],
                 'character'       => $character->Name,
+                'character_id'    => $character->Id,
                 'has_birthdate'   => !empty($validated['birthdate']),
                 'performed_by'    => $validated['performed_by_discord_id'] ?? 'self',
             ]);
@@ -141,6 +173,7 @@ class IdentityController extends Controller
         Log::info('Discord user registró personaje público', [
             'discord_user_id' => $validated['discord_user_id'],
             'character'       => $character->Name,
+            'character_id'    => $character->Id,
             'guild'           => $character->GuildName ?? 'sin gremio',
             'performed_by'    => $validated['performed_by_discord_id'] ?? 'self',
         ]);
@@ -296,6 +329,48 @@ class IdentityController extends Controller
                 'miembro'         => (bool) $p->miembro,
                 'discord_user_id' => $p->discord_user_id,
             ])->values(),
+        ]);
+    }
+
+    public function searchCharacter(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'character_name' => 'required|string|max:50',
+        ]);
+
+        $candidates = $this->buscarpersonajepornombre($validated['character_name']);
+
+        if (empty($candidates)) {
+            return response()->json([
+                'success' => false,
+                'reason'  => "No se encontró ningún personaje con el nombre **{$validated['character_name']}**.",
+            ], 200);
+        }
+
+        // Filtrar coincidencias exactas (case-insensitive)
+        $exactMatches = array_filter($candidates, function ($c) use ($validated) {
+            return strcasecmp($c->Name, $validated['character_name']) === 0;
+        });
+
+        // Si no hay coincidencias exactas, devolver todas las parciales
+        $results = !empty($exactMatches) ? array_values($exactMatches) : $candidates;
+
+        return response()->json([
+            'success' => true,
+            'count'   => count($results),
+            'players' => array_map(function ($p) {
+                return [
+                    'id'         => $p->Id,
+                    'name'       => $p->Name,
+                    'guild_id'   => $p->GuildId,
+                    'guild_name' => $p->GuildName,
+                    'alliance_id' => $p->AllianceId,
+                    'alliance_name' => $p->AllianceName,
+                    'kill_fame'  => $p->KillFame,
+                    'death_fame' => $p->DeathFame,
+                    'avatar'     => $p->Avatar,
+                ];
+            }, $results),
         ]);
     }
 }

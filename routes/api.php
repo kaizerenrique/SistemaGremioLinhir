@@ -46,6 +46,7 @@ Route::prefix('bot')->middleware(['auth:sanctum', 'ability:read'])->group(functi
     Route::post('/register-character', [IdentityController::class, 'registerCharacter']);
     Route::post('/sync-registration',  [IdentityController::class, 'syncRegistration']);
     Route::get('/members', [IdentityController::class, 'listMembers']);
+    Route::post('/search-character', [IdentityController::class, 'searchCharacter']);
 });
 
 
