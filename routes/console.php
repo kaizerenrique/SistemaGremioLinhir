@@ -66,3 +66,8 @@ Schedule::command(SyncDiscordRoles::class)
     ->withoutOverlapping()
     ->onOneServer()
     ->description('Sincroniza roles de Discord con la web');
+
+Schedule::command(\App\Console\Commands\SendCtaReminders::class)
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->onOneServer();

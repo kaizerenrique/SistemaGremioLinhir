@@ -9,6 +9,11 @@ use App\Http\Controllers\Api\Bot\TaskController;
 use App\Http\Controllers\Api\Bot\ReportController;
 use App\Http\Controllers\Api\Bot\PointController;
 use App\Http\Controllers\Api\Bot\IdentityController;
+use App\Http\Controllers\Api\Bot\CtaController;
+use App\Http\Controllers\Api\Bot\CompositionController;
+use App\Http\Controllers\Api\Bot\ActivityController;
+use App\Http\Controllers\Api\Bot\GuildBankController;
+use App\Http\Controllers\Api\Bot\WithdrawalController;
 
 // Redirección a proveedor (discord)
 Route::get('/auth/discord', [UserController::class, 'redirect_api']);
@@ -47,6 +52,34 @@ Route::prefix('bot')->middleware(['auth:sanctum', 'ability:read'])->group(functi
     Route::post('/sync-registration',  [IdentityController::class, 'syncRegistration']);
     Route::get('/members', [IdentityController::class, 'listMembers']);
     Route::post('/search-character', [IdentityController::class, 'searchCharacter']);
+
+        // CTAs
+    Route::get ('/ctas/active',             [CtaController::class, 'active']);
+    Route::get ('/ctas/pending-reminders',  [CtaController::class, 'pendingReminders']);
+    Route::get ('/ctas/{id}',               [CtaController::class, 'show']);
+    Route::post('/ctas',                    [CtaController::class, 'store']);
+    Route::post('/ctas/{id}/join',          [CtaController::class, 'join']);
+    Route::post('/ctas/{id}/absent',        [CtaController::class, 'absent']);
+    Route::post('/ctas/{id}/cancel',        [CtaController::class, 'cancel']);
+    Route::post('/ctas/{id}/reminder-sent', [CtaController::class, 'markReminderSent']);
+
+    // Composiciones
+    Route::get   ('/compositions',           [CompositionController::class, 'index']);
+    Route::post  ('/compositions',           [CompositionController::class, 'store']);
+
+    // Actividades
+    Route::post('/activities',               [ActivityController::class, 'store']);
+    Route::get ('/activities/{id}',          [ActivityController::class, 'show']);
+
+    // Cuenta gremial
+    Route::get ('/guild-balance',            [GuildBankController::class, 'balance']);
+    Route::post('/guild-transactions',       [GuildBankController::class, 'store']);
+
+    // Retiros
+    Route::post('/withdrawals',              [WithdrawalController::class, 'store']);
+    Route::get ('/withdrawals/pending',      [WithdrawalController::class, 'pending']);
+    Route::post('/withdrawals/{id}/approve', [WithdrawalController::class, 'approve']);
+    Route::post('/withdrawals/{id}/reject',  [WithdrawalController::class, 'reject']);
 });
 
 

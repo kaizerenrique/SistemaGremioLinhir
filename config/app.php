@@ -135,5 +135,7 @@ return [
     'canal_estado_servidor' => env('CANAL_ESTADO_SERVIDOR'),
     'canal_cumpleanos' => env('DISCORD_BIRTHDAY_WEBHOOK_URL'),           
     'birthday_mention_role' => env('DISCORD_BIRTHDAY_MENTION_ROLE', '@everyone'),
+    'guild_tax_rate'      => env('GUILD_TAX_RATE', 10),
+    'management_tax_rate' => env('MANAGEMENT_TAX_RATE', 5),
 
 ];

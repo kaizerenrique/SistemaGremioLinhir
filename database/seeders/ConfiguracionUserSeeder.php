@@ -72,6 +72,18 @@ class ConfiguracionUserSeeder extends Seeder
             'review_reports',
             'manage_tasks',
             'manage_points',
+
+            // --- CTAs ---
+            'Ver CTAs',
+            'Gestionar CTAs',
+
+            // --- Actividades ---
+            'Ver Actividades',
+            'Gestionar Actividades',
+
+            // --- Cuenta Gremial ---
+            'Ver Cuenta Gremial',
+            'Gestionar Cuenta Gremial',
         ];
 
         foreach ($permissions as $permName) {
@@ -101,6 +113,12 @@ class ConfiguracionUserSeeder extends Seeder
                 'review_reports',
                 'manage_tasks',
                 'manage_points',
+                'Ver CTAs', 
+                'Gestionar CTAs',
+                'Ver Actividades', 
+                'Gestionar Actividades',
+                'Ver Cuenta Gremial', 
+                'Gestionar Cuenta Gremial',
             ],
 
             'Sub-Oficial' => [
@@ -112,10 +130,13 @@ class ConfiguracionUserSeeder extends Seeder
                 'Ver Discord',
                 'review_reports',
                 'Ver Linhir',
+                'Ver CTAs',
+                'Ver Actividades',
             ],
 
             'Linhir' => [
-                'Ver Batallas',              
+                'Ver Batallas',
+                'Ver CTAs',              
             ],
 
             'Usuario' => [
