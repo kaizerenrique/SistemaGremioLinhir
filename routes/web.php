@@ -128,9 +128,6 @@ Route::middleware([
     // -----------------------------------------------
     // Solicitudes de retiro
     // -----------------------------------------------
-    Route::get('/mis-retiros', fn() => view('paginas.mis-retiros'))
-        ->name('retiros.personales');
-
     Route::middleware('can:Gestionar Cuenta Gremial')->group(function () {
         Route::get('/admin/retiros', fn() => view('paginas.retiros-pendientes'))
             ->name('retiros.admin');
