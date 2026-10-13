@@ -128,4 +128,33 @@ class WithdrawalController extends Controller
     {
         return response()->json(['success' => false, 'reason' => $reason], 200);
     }
+
+    /**
+     * GET /api/bot/withdrawals/mine?discord_user_id=X&limit=N
+     *
+     * Historial de solicitudes de retiro de un usuario (más recientes primero).
+     */
+    public function mine(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'discord_user_id' => 'required|string',
+            'limit'           => 'nullable|integer|min:1|max:50',
+        ]);
+
+        $limit = (int) ($data['limit'] ?? 20);
+
+        $requests = WithdrawalRequest::where('discord_user_id', $data['discord_user_id'])
+            ->orderBy('created_at', 'desc')
+            ->limit($limit)
+            ->get([
+                'id', 'amount', 'status',
+                'reviewed_by_name', 'reviewed_at', 'notes',
+                'created_at',
+            ]);
+
+        return response()->json([
+            'success'  => true,
+            'requests' => $requests,
+        ]);
+    }
 }
