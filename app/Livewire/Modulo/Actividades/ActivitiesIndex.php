@@ -16,7 +16,7 @@ class ActivitiesIndex extends Component
 
     // -------- Filtros de listado --------
     public $buscar = '';
-    public $modo = '';           // '' | 'normal' | 'pro_guild'
+    public $modo = '';
     public $desde = '';
     public $hasta = '';
 
@@ -30,6 +30,8 @@ class ActivitiesIndex extends Component
     // -------- Modal detalle --------
     public $showDetail = false;
     public ?int $detailId = null;
+    /** @var Activity|null Actividad precargada al abrir el modal de detalle. */
+    public ?Activity $detailActivity = null;
 
     // -------- Modal crear --------
     public $showForm = false;
@@ -41,12 +43,9 @@ class ActivitiesIndex extends Component
     public int $items_value = 0;
     public bool $pro_guild = false;
 
-    // Cada fila: ['personaje_id' => int, 'percent' => float]
     public array $participants = [];
-
     public ?int $selectedPersonajeId = null;
 
-    // Lista de personajes disponibles (miembros del gremio, con discord vinculado)
     public $personajesDisponibles = [];
 
     protected function rules(): array
@@ -73,7 +72,6 @@ class ActivitiesIndex extends Component
 
     public function mount(): void
     {
-        // Solo personajes miembros del gremio con discord vinculado
         $this->personajesDisponibles = Personaje::where('miembro', true)
             ->whereNotNull('discord_user_id')
             ->orderBy('Name')
@@ -116,6 +114,7 @@ class ActivitiesIndex extends Component
     public function openDetail(int $id): void
     {
         $this->detailId = $id;
+        $this->detailActivity = Activity::with('participants')->find($id);
         $this->showDetail = true;
         $this->dispatch('open-modal');
     }
@@ -124,6 +123,7 @@ class ActivitiesIndex extends Component
     {
         $this->showDetail = false;
         $this->detailId = null;
+        $this->detailActivity = null;
         $this->dispatch('close-modal');
     }
 
@@ -150,7 +150,6 @@ class ActivitiesIndex extends Component
             return;
         }
 
-        // Evitar duplicados
         if (collect($this->participants)->pluck('personaje_id')->contains($this->selectedPersonajeId)) {
             $this->dispatch('notify', [
                 'message' => 'Ese personaje ya está añadido.',
@@ -179,7 +178,6 @@ class ActivitiesIndex extends Component
         $user = Auth::user();
         $discordProvider = $user->authProviders()->where('provider', 'discord')->first();
 
-        // Normalizar participantes: el servicio espera discord_user_id + name
         $participants = [];
         foreach ($this->participants as $row) {
             $personaje = $this->personajesDisponibles->firstWhere('id', $row['personaje_id']);

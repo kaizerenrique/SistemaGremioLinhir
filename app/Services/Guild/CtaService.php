@@ -10,6 +10,7 @@ use App\Models\Personaje;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Database\QueryException;
 
 class CtaService
 {
@@ -53,7 +54,8 @@ class CtaService
 
     /**
      * Une a un usuario a una CTA escogiendo un arma libre.
-     * Bloquea la fila para evitar race conditions.
+     * Bloquea la fila de la CTA y traduce la violación del índice
+     * `cta_weapon_unique` a un ValidationException legible.
      */
     public function join(int $ctaId, string $discordUserId, string $userName, int $weaponId): CtaParticipant
     {
@@ -69,7 +71,7 @@ class CtaService
             $weapon = CompositionWeapon::where('composition_id', $cta->composition_id)
                 ->findOrFail($weaponId);
 
-            // ¿Arma ya ocupada?
+            // Verificación "amistosa" previa (mejor UX en el 99% de los casos)
             $ocupada = $cta->confirmedParticipants()
                 ->where('composition_weapon_id', $weaponId)
                 ->where('discord_user_id', '!=', $discordUserId)
@@ -81,19 +83,31 @@ class CtaService
                 ]);
             }
 
-            // Vincular con personaje si existe
             $personajeId = Personaje::where('discord_user_id', $discordUserId)->value('id');
 
-            return CtaParticipant::updateOrCreate(
-                ['cta_id' => $ctaId, 'discord_user_id' => $discordUserId],
-                [
-                    'user_name'              => $userName,
-                    'personaje_id'           => $personajeId,
-                    'composition_weapon_id'  => $weaponId,
-                    'status'                 => 'confirmed',
-                    'participation_percent'  => 100,
-                ]
-            );
+            try {
+                return CtaParticipant::updateOrCreate(
+                    ['cta_id' => $ctaId, 'discord_user_id' => $discordUserId],
+                    [
+                        'user_name'              => $userName,
+                        'personaje_id'           => $personajeId,
+                        'composition_weapon_id'  => $weaponId,
+                        'status'                 => 'confirmed',
+                        'participation_percent'  => 100,
+                    ]
+                );
+            } catch (QueryException $e) {
+                // El índice único `cta_weapon_unique` (cta_id, confirmed_weapon_id)
+                // captura la race condition. Lo traducimos a algo que el bot pueda mostrar.
+                if (str_contains($e->getMessage(), 'cta_weapon_unique')) {
+                    throw ValidationException::withMessages([
+                        'weapon' => 'Alguien tomó esa arma justo antes que tú. Elige otra.',
+                    ]);
+                }
+
+                // Si es otra cosa, la relanzamos para que no se pierda silenciosamente.
+                throw $e;
+            }
         });
     }
 

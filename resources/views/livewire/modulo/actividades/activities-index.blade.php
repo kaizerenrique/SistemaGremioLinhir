@@ -97,50 +97,48 @@
     <x-dialog-modal wire:model="showDetail" maxWidth="2xl">
         <x-slot name="title">Detalle de actividad</x-slot>
         <x-slot name="content">
-            @php $activity = $detailId ? \App\Models\Activity::with('participants')->find($detailId) : null; @endphp
-
-            @if($activity)
+            @if($detailActivity)
                 <div class="space-y-4">
                     <div>
-                        <div class="text-lg font-semibold text-content-accent">{{ $activity->name }}</div>
+                        <div class="text-lg font-semibold text-content-accent">{{ $detailActivity->name }}</div>
                         <div class="text-sm text-content-light/70">
-                            {{ $activity->start_time->format('d/m/Y H:i') }} – {{ $activity->end_time->format('H:i') }} UTC
+                            {{ $detailActivity->start_time->format('d/m/Y H:i') }} – {{ $detailActivity->end_time->format('H:i') }} UTC
                         </div>
                     </div>
 
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                         <div class="bg-base-200 p-3 rounded">
                             <div class="text-xs text-content-light/60">Silver líquido</div>
-                            <div class="font-semibold">{{ number_format($activity->liquid_silver, 0, ',', '.') }}</div>
+                            <div class="font-semibold">{{ number_format($detailActivity->liquid_silver, 0, ',', '.') }}</div>
                         </div>
                         <div class="bg-base-200 p-3 rounded">
                             <div class="text-xs text-content-light/60">Valor items</div>
-                            <div class="font-semibold">{{ number_format($activity->items_value, 0, ',', '.') }}</div>
+                            <div class="font-semibold">{{ number_format($detailActivity->items_value, 0, ',', '.') }}</div>
                         </div>
                         <div class="bg-base-200 p-3 rounded">
-                            <div class="text-xs text-content-light/60">Tasa gremio ({{ $activity->guild_tax_rate }}%)</div>
-                            <div class="font-semibold">{{ number_format($activity->guild_tax_amount, 0, ',', '.') }}</div>
+                            <div class="text-xs text-content-light/60">Tasa gremio ({{ $detailActivity->guild_tax_rate }}%)</div>
+                            <div class="font-semibold">{{ number_format($detailActivity->guild_tax_amount, 0, ',', '.') }}</div>
                         </div>
                         <div class="bg-base-200 p-3 rounded">
-                            <div class="text-xs text-content-light/60">Gestión ({{ $activity->management_tax_rate }}%)</div>
-                            <div class="font-semibold">{{ number_format($activity->management_tax_amount, 0, ',', '.') }}</div>
+                            <div class="text-xs text-content-light/60">Gestión ({{ $detailActivity->management_tax_rate }}%)</div>
+                            <div class="font-semibold">{{ number_format($detailActivity->management_tax_amount, 0, ',', '.') }}</div>
                         </div>
                     </div>
 
                     <div class="bg-primary/10 border border-primary/30 p-3 rounded text-center">
                         <div class="text-xs uppercase text-content-light/70">Total distribuido</div>
                         <div class="text-2xl font-bold text-accent">
-                            {{ number_format($activity->total_distributed, 0, ',', '.') }} silver
+                            {{ number_format($detailActivity->total_distributed, 0, ',', '.') }} silver
                         </div>
                     </div>
 
-                    @if($activity->pro_guild)
+                    @if($detailActivity->pro_guild)
                         <div class="text-sm text-accent text-center">
                             🏛️ Actividad pro-gremio — el total fue a la cuenta común.
                         </div>
                     @endif
 
-                    @if($activity->participants->count())
+                    @if($detailActivity->participants->count())
                         <div>
                             <div class="text-sm font-semibold text-content-light mb-2">Participantes</div>
                             <div class="max-h-60 overflow-y-auto">
@@ -153,7 +151,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach($activity->participants as $p)
+                                        @foreach($detailActivity->participants as $p)
                                             <tr class="border-t border-base-200">
                                                 <td class="py-1.5">{{ $p->user_name }}</td>
                                                 <td class="py-1.5 text-right">{{ $p->participation_percent }}%</td>
@@ -216,7 +214,6 @@
                     </div>
                 </div>
 
-                <!-- Modo -->
                 <div class="flex items-center gap-3 p-3 bg-base-200 rounded">
                     <input type="checkbox" id="pro_guild" wire:model.live="pro_guild"
                            class="rounded bg-base-100 border-base-100 text-primary focus:ring-primary">
@@ -226,7 +223,6 @@
                     </label>
                 </div>
 
-                <!-- Participantes (solo si no pro-gremio) -->
                 @if(!$pro_guild)
                     <div class="border-t border-base-300 pt-4">
                         <div class="flex items-center justify-between mb-2">

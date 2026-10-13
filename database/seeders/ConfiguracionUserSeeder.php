@@ -129,7 +129,6 @@ class ConfiguracionUserSeeder extends Seeder
                 'Ver Linhir',                
                 'Ver Discord',
                 'review_reports',
-                'Ver Linhir',
                 'Ver CTAs',
                 'Ver Actividades',
             ],

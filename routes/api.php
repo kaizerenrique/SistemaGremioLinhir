@@ -66,6 +66,7 @@ Route::prefix('bot')->middleware(['auth:sanctum', 'ability:read'])->group(functi
     // Composiciones
     Route::get   ('/compositions',           [CompositionController::class, 'index']);
     Route::post  ('/compositions',           [CompositionController::class, 'store']);
+    Route::delete('/compositions/{id}', [CompositionController::class, 'destroy']);
 
     // Actividades
     Route::post('/activities',               [ActivityController::class, 'store']);
@@ -111,4 +112,5 @@ Route::prefix('bot')->middleware('auth:sanctum')->group(function () {
     Route::get('/points/history/{discord_user_id}', [PointController::class, 'history']);
     Route::post('/points/add', [PointController::class, 'add']);
     Route::post('/points/spend', [PointController::class, 'spend']);
+
 });
