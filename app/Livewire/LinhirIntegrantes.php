@@ -63,6 +63,12 @@ class LinhirIntegrantes extends Component
 
     public function editarinfo($id)    
     {
+        abort_unless(
+            auth()->user()->hasAnyRole(['Administrador', 'Oficial']),
+            403,
+            'No autorizado.'
+        );
+
         $personaje = Personaje::find($id);
         
         if ($personaje) {
@@ -75,6 +81,12 @@ class LinhirIntegrantes extends Component
 
     public function guardarBirthdate()
     {
+        abort_unless(
+            auth()->user()->hasAnyRole(['Administrador', 'Oficial']),
+            403,
+            'No autorizado.'
+        );
+        
         $this->validate();
 
         $personaje = Personaje::find($this->personaje_id);
