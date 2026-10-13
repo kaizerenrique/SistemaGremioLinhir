@@ -373,4 +373,44 @@ class IdentityController extends Controller
             }, $results),
         ]);
     }
+
+    /**
+     * GET /api/bot/members/{discord_user_id}/balance
+     *
+     * Devuelve el saldo personal del personaje vinculado a un discord_user_id.
+     * Un solo query con `withSum` para ingresos/egresos filtrados.
+     */
+    public function balance(string $discordUserId): JsonResponse
+    {
+        $personaje = Personaje::where('discord_user_id', $discordUserId)
+            ->withSum(
+                ['movimientosBancarios as ingresos' => fn ($q) => $q->where('tipo', 'ingreso')],
+                'monto'
+            )
+            ->withSum(
+                ['movimientosBancarios as egresos' => fn ($q) => $q->where('tipo', 'egreso')],
+                'monto'
+            )
+            ->first();
+
+        if (!$personaje) {
+            return response()->json([
+                'success' => false,
+                'reason'  => 'Este usuario no tiene un personaje vinculado. '
+                    . 'Usa `/register start` primero.',
+            ], 200);
+        }
+
+        $ingresos = (int) ($personaje->ingresos ?? 0);
+        $egresos  = (int) ($personaje->egresos ?? 0);
+
+        return response()->json([
+            'success'         => true,
+            'discord_user_id' => $discordUserId,
+            'personaje_name'  => $personaje->Name,
+            'balance'         => $ingresos - $egresos,
+            'ingresos'        => $ingresos,
+            'egresos'         => $egresos,
+        ]);
+    }
 }
