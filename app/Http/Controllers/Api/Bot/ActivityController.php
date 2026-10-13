@@ -106,4 +106,37 @@ class ActivityController extends Controller
             'reason'  => $reason,
         ], 200);
     }
+
+    /**
+     * GET /api/bot/activities?limit=N&offset=M
+     *
+     * Historial paginado de actividades financieras (más recientes primero).
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'limit'  => 'nullable|integer|min:1|max:100',
+            'offset' => 'nullable|integer|min:0',
+        ]);
+
+        $limit  = (int) ($data['limit'] ?? 20);
+        $offset = (int) ($data['offset'] ?? 0);
+
+        $activities = Activity::with([
+                'cta:id,title',
+                'participants:id,activity_id,user_name,share',
+            ])
+            ->orderBy('start_time', 'desc')
+            ->offset($offset)
+            ->limit($limit)
+            ->get();
+
+        return response()->json([
+            'success'    => true,
+            'total'      => Activity::count(),
+            'limit'      => $limit,
+            'offset'     => $offset,
+            'activities' => $activities,
+        ]);
+    }
 }
