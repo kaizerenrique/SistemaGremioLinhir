@@ -68,13 +68,6 @@ Route::middleware([
     });
 
     // -----------------------------------------------
-    // Banco Gremial
-    // -----------------------------------------------
-    Route::middleware('can:Ver Banco Gremial')->group(function () {
-        Route::get('/bancogremial', fn() => view('paginas.bancodegremio'))->name('bancodegremio');
-    });
-
-    // -----------------------------------------------
     // Usuarios
     // -----------------------------------------------
     Route::middleware('can:Ver Usuarios')->group(function () {
