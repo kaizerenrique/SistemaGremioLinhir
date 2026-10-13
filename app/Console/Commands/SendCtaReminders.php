@@ -3,9 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Services\Discord\NotificationService;
 use App\Services\Guild\CtaService;
-use Carbon\Carbon;
 use App\Jobs\SendCtaReminderJob;
 
 

@@ -2,20 +2,27 @@
 
 namespace App\Jobs;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
 use App\Models\Cta;
 use App\Services\Discord\NotificationService;
 use App\Services\Guild\CtaService;
 use Carbon\Carbon;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
-class SendCtaReminderJob implements ShouldQueue
+class SendCtaReminderJob implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    /**
+     * Timeout del Job en segundos. Con 100 participantes × 1.2s = 120s.
+     * Damos margen de sobra.
+     */
+    public int $timeout = 300;
 
     /**
      * Reintentos: 2 intentos son suficientes. Si falla dos veces,
@@ -28,11 +35,28 @@ class SendCtaReminderJob implements ShouldQueue
     public int $backoff = 30;
 
     /**
+     * Tiempo máximo que el lock único permanece en caché (segundos).
+     * Defensa contra locks atrapados: si el Job falla definitivamente,
+     * en 1h el lock expira y la CTA puede reintentar limpiamente.
+     */
+    public int $uniqueFor = 3600;
+
+    /**
      * Create a new job instance.
      */
     public function __construct(public int $ctaId)
     {
         //
+    }
+
+    /**
+     * Clave de unicidad: una sola instancia por CTA en la cola.
+     * SIN ESTE MÉTODO, todos los Jobs comparten la misma clave y
+     * solo el primero se encola (los demás son rechazados).
+     */
+    public function uniqueId(): string
+    {
+        return (string) $this->ctaId;
     }
 
     /**
