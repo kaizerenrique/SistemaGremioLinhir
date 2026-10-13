@@ -48,10 +48,12 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::prefix('bot')->middleware(['auth:sanctum', 'ability:read'])->group(function () {
     Route::get('/horario', [ApisController::class, 'horario']);
     Route::get('/oro',     [ApisController::class, 'valordeloro']);
+
     Route::post('/register-character', [IdentityController::class, 'registerCharacter']);
     Route::post('/sync-registration',  [IdentityController::class, 'syncRegistration']);
-    Route::get('/members', [IdentityController::class, 'listMembers']);
+    Route::get('/members',             [IdentityController::class, 'listMembers']);
     Route::post('/search-character', [IdentityController::class, 'searchCharacter']);
+    Route::get('/members/{discord_user_id}/balance', [IdentityController::class, 'balance']);
 
         // CTAs
     Route::get ('/ctas/active',             [CtaController::class, 'active']);
@@ -66,11 +68,12 @@ Route::prefix('bot')->middleware(['auth:sanctum', 'ability:read'])->group(functi
     // Composiciones
     Route::get   ('/compositions',           [CompositionController::class, 'index']);
     Route::post  ('/compositions',           [CompositionController::class, 'store']);
-    Route::delete('/compositions/{id}', [CompositionController::class, 'destroy']);
+    Route::delete('/compositions/{id}',      [CompositionController::class, 'destroy']);
 
     // Actividades
     Route::post('/activities',               [ActivityController::class, 'store']);
     Route::get ('/activities/{id}',          [ActivityController::class, 'show']);
+    Route::get('/activities',                [ActivityController::class, 'index']);
 
     // Cuenta gremial
     Route::get ('/guild-balance',            [GuildBankController::class, 'balance']);
@@ -79,8 +82,12 @@ Route::prefix('bot')->middleware(['auth:sanctum', 'ability:read'])->group(functi
     // Retiros
     Route::post('/withdrawals',              [WithdrawalController::class, 'store']);
     Route::get ('/withdrawals/pending',      [WithdrawalController::class, 'pending']);
+    Route::get('/withdrawals/mine',          [WithdrawalController::class, 'mine']);
     Route::post('/withdrawals/{id}/approve', [WithdrawalController::class, 'approve']);
-    Route::post('/withdrawals/{id}/reject',  [WithdrawalController::class, 'reject']);
+    Route::post('/withdrawals/{id}/reject',  [WithdrawalController::class, 'reject']);    
+
+    // Historial de cuenta gremial
+    Route::get('/guild-transactions', [GuildBankController::class, 'index']);
 });
 
 
