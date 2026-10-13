@@ -63,4 +63,38 @@ class GuildBankController extends Controller
             'new_balance' => $this->bank->balance(),
         ]);
     }
+
+    /**
+     * GET /api/bot/guild-transactions?limit=N&offset=M&type=ingreso|egreso|inicial
+     *
+     * Historial paginado de movimientos de la cuenta del gremio.
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'limit'  => 'nullable|integer|min:1|max:100',
+            'offset' => 'nullable|integer|min:0',
+            'type'   => 'nullable|in:inicial,ingreso,egreso',
+        ]);
+
+        $limit  = (int) ($data['limit'] ?? 20);
+        $offset = (int) ($data['offset'] ?? 0);
+
+        $query = GuildTransaction::query();
+        if (!empty($data['type'])) {
+            $query->where('type', $data['type']);
+        }
+
+        $transactions = $query
+            ->orderBy('created_at', 'desc')
+            ->offset($offset)
+            ->limit($limit)
+            ->get();
+
+        return response()->json([
+            'success'      => true,
+            'balance'      => $this->bank->balance(),
+            'transactions' => $transactions,
+        ]);
+    }
 }
