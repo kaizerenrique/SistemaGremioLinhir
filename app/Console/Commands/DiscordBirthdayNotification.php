@@ -118,7 +118,7 @@ class DiscordBirthdayNotification extends Command
             
             $description .= "**👤 {$personaje->Name}**\n";    
             
-            $description .= "🗓️ **Fecha:** " . $birthdate->format('d/m/Y') . "\n";
+            $description .= "🗓️ **Fecha:** " . $birthdate->format('d/m') . "\n";
             
             // Separador entre personas
             $description .= "━━━━━━━━━━━━━━━━━━\n";
