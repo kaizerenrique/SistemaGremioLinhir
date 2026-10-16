@@ -58,6 +58,8 @@ Route::prefix('bot')->middleware(['auth:sanctum', 'ability:read'])->group(functi
         // CTAs
     Route::get ('/ctas/active',             [CtaController::class, 'active']);
     Route::get ('/ctas/pending-reminders',  [CtaController::class, 'pendingReminders']);
+    Route::get ('/ctas',                    [CtaController::class, 'index']);
+    Route::get ('/ctas/pending-payment',    [CtaController::class, 'pendingPayment']);
     Route::get ('/ctas/{id}',               [CtaController::class, 'show']);
     Route::post('/ctas',                    [CtaController::class, 'store']);
     Route::post('/ctas/{id}/join',          [CtaController::class, 'join']);

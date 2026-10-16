@@ -134,4 +134,75 @@ class CtaController extends Controller
         $this->service->markReminderSent($id);
         return response()->json(['success' => true]);
     }
+
+    /**
+     * GET /api/bot/ctas?status=&paid=&limit=&offset=&order=
+     *
+     * Listado paginado de CTAs con filtros opcionales.
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'status' => 'nullable|in:scheduled,cancelled,completed',
+            'paid'   => 'nullable|boolean',
+            'limit'  => 'nullable|integer|min:1|max:100',
+            'offset' => 'nullable|integer|min:0',
+            'order'  => 'nullable|in:asc,desc',
+        ]);
+
+        $query = Cta::with('composition:id,name')
+            ->withCount([
+                'participants as confirmed_count' => fn ($q) => $q->where('status', 'confirmed'),
+            ]);
+
+        if (!empty($data['status'])) {
+            $query->where('status', $data['status']);
+        }
+        if (isset($data['paid'])) {
+            $query->where('paid', (bool) $data['paid']);
+        }
+
+        $limit  = (int) ($data['limit']  ?? 20);
+        $offset = (int) ($data['offset'] ?? 0);
+        $order  = $data['order'] ?? 'desc';
+
+        $ctas = $query->orderBy('start_time', $order)
+            ->offset($offset)
+            ->limit($limit)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'total'   => (int) Cta::count(),
+            'limit'   => $limit,
+            'offset'  => $offset,
+            'ctas'    => $ctas,
+        ]);
+    }
+
+    /**
+     * GET /api/bot/ctas/pending-payment
+     *
+     * CTAs cuya hora de fin ya pasó y aún no han sido pagadas.
+     * Ordenadas por más antiguas primero (urgencia de pago).
+     */
+    public function pendingPayment(): JsonResponse
+    {
+        $ctas = Cta::with('composition:id,name')
+            ->withCount([
+                'participants as confirmed_count' => fn ($q) => $q->where('status', 'confirmed'),
+            ])
+            ->where('status', 'scheduled')
+            ->where('paid', false)
+            ->where('end_time', '<', now())
+            ->orderBy('start_time', 'asc')
+            ->limit(50)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'total'   => $ctas->count(),
+            'ctas'    => $ctas,
+        ]);
+    }
 }

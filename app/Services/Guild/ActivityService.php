@@ -97,6 +97,7 @@ class ActivityService
                     Cta::whereKey($data['cta_id'])->update([
                         'paid'      => true,
                         'pro_guild' => true,
+                        'status'    => 'completed',
                     ]);
                 }
 
@@ -180,7 +181,7 @@ class ActivityService
             }
 
             if (!empty($data['cta_id'])) {
-                Cta::whereKey($data['cta_id'])->update(['paid' => true, 'pro_guild' => false]);
+                Cta::whereKey($data['cta_id'])->update(['paid' => true, 'pro_guild' => false, 'status' => 'completed',]);
             }
 
             return $activity->load('participants');
