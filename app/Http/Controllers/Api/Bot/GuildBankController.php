@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Services\Guild\GuildBankService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
+use App\Models\GuildTransaction;
 
 class GuildBankController extends Controller
 {
