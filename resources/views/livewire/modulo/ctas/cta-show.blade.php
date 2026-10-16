@@ -56,7 +56,9 @@
                 @foreach($cta->composition->weapons as $weapon)
                     @php $asignado = $ocupacion[$weapon->id] ?? null; @endphp
                     <div class="flex items-center gap-2 p-2 rounded border {{ $asignado ? 'border-primary/40 bg-primary/5' : 'border-base-200' }}">
-                        <span class="text-lg">{{ $weapon->weapon_icon }}</span>
+                        <div class="shrink-0">
+                            {!! $weapon->icon_html !!}
+                        </div>
                         <div class="flex-1 min-w-0">
                             <div class="text-sm text-content-light truncate">{{ $weapon->weapon_name }}</div>
                             <div class="text-xs {{ $asignado ? 'text-primary' : 'text-content-light/50' }}">
@@ -93,7 +95,10 @@
                                 </td>
                                 <td class="px-4 py-3 text-sm">
                                     @if($p->weapon)
-                                        {{ $p->weapon->weapon_icon }} {{ $p->weapon->weapon_name }}
+                                        <span class="inline-flex items-center gap-1.5">
+                                            {!! $p->weapon->icon_html !!}
+                                            <span>{{ $p->weapon->weapon_name }}</span>
+                                        </span>
                                     @else
                                         <span class="text-content-light/50">—</span>
                                     @endif

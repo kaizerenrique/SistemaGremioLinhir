@@ -37,8 +37,9 @@
                             <td class="px-4 py-3 text-sm">
                                 <div class="flex flex-wrap gap-1">
                                     @foreach($comp->weapons as $w)
-                                        <span class="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs">
-                                            {{ $w->weapon_icon }} {{ $w->weapon_name }}
+                                        <span class="inline-flex items-center gap-1.5 bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs">
+                                            {!! $w->icon_html !!}
+                                            <span>{{ $w->weapon_name }}</span>
                                         </span>
                                     @endforeach
                                 </div>
@@ -117,7 +118,7 @@
                         @foreach($weapons as $index => $weapon)
                             <div class="flex gap-2 items-center" wire:key="weapon-{{ $index }}">
                                 <x-input type="text" wire:model="weapons.{{ $index }}.icon"
-                                         placeholder="🛡️" class="w-16 text-center" maxlength="4"/>
+                                         placeholder="🛡️" class="w-16 text-center" maxlength="64"/>
                                 <x-input type="text" wire:model="weapons.{{ $index }}.name"
                                          placeholder="Nombre del arma" class="flex-1"/>
                                 <button type="button" wire:click="removeWeaponRow({{ $index }})"
