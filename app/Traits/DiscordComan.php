@@ -371,6 +371,39 @@ trait DiscordComan
         Cache::forget("discord_guild_info_{$guildId}");
         Cache::forget("discord_guild_channels_{$guildId}");
         Cache::forget("discord_guild_roles_{$guildId}");
+        Cache::forget("discord_guild_emojis_{$guildId}");
+    }
+
+    /**
+     * Obtiene los emojis del servidor de Discord.
+     *
+     * Usado por el picker de emojis de composiciones.
+     * Cache: 1 hora para evitar saturar la API.
+     *
+     * @return array Lista de emojis: [{id, name, animated, ...}, ...]
+     */
+    public function getGuildEmojis()
+    {
+        $guildId  = config('services.discord.servidor_discord_linhir');
+        $cacheKey = "discord_guild_emojis_{$guildId}";
+
+        return Cache::remember($cacheKey, 3600, function () use ($guildId) {
+            $token = config('services.discord.bot_token');
+
+            if (empty($token) || empty($guildId)) {
+                return [];
+            }
+
+            $response = Http::withHeaders([
+                'Authorization' => 'Bot ' . $token,
+            ])->get("https://discord.com/api/v10/guilds/{$guildId}/emojis");
+
+            if ($response->successful()) {
+                return $response->json();
+            }
+
+            return [];
+        });
     }
 
 

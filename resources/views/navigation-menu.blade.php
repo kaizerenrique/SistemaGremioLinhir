@@ -27,12 +27,12 @@
                         <!-- ============================================ -->
                         <!-- GREMIO                                        -->
                         <!-- ============================================ -->
-                        @if (auth()->user()->canAny(['Ver Linhir', 'Ver CTAs']))
+                        @if (auth()->user()->canAny(['Ver Linhir', 'Ver CTAs', 'Gestionar CTAs']))
                             <div class="relative" x-data="{ open: false }" @click.away="open = false">
                                 <button type="button" @click="open = !open"
                                     class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5
-                                               {{ request()->routeIs('linhir', 'ranking', 'ctas.*') ? 'border-primary text-content-light' : 'text-content-light/70 hover:text-content-light hover:border-primary' }}
-                                               focus:outline-none transition duration-150 ease-in-out">
+                       {{ request()->routeIs('linhir', 'ranking', 'ctas.*', 'composiciones.*') ? 'border-primary text-content-light' : 'text-content-light/70 hover:text-content-light hover:border-primary' }}
+                       focus:outline-none transition duration-150 ease-in-out">
                                     Gremio
                                     <svg class="ms-1 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none"
                                         viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -55,6 +55,10 @@
                                     @can('Ver CTAs')
                                         <x-dropdown-link
                                             href="{{ route('ctas.index') }}">{{ __('Actividades (CTAs)') }}</x-dropdown-link>
+                                    @endcan
+                                    @can('Gestionar CTAs')
+                                        <x-dropdown-link
+                                            href="{{ route('composiciones.index') }}">{{ __('Composiciones') }}</x-dropdown-link>
                                     @endcan
                                 </div>
                             </div>
@@ -306,7 +310,7 @@
                 {{-- =========================================== --}}
                 {{-- GREMIO                                       --}}
                 {{-- =========================================== --}}
-                @if (auth()->user()->canAny(['Ver Linhir', 'Ver CTAs']))
+                @if (auth()->user()->canAny(['Ver Linhir', 'Ver CTAs', 'Gestionar CTAs']))
                     <div>
                         <button type="button" @click="openSection = openSection === 'gremio' ? null : 'gremio'"
                             class="w-full flex items-center justify-between ps-3 pe-4 py-2 border-l-4 border-transparent text-base font-medium text-content-light/80 hover:text-content-light hover:bg-base-300 focus:outline-none transition">
@@ -330,6 +334,11 @@
                             @can('Ver CTAs')
                                 <x-responsive-nav-link href="{{ route('ctas.index') }}" :active="request()->routeIs('ctas.*')">
                                     {{ __('Actividades (CTAs)') }}
+                                </x-responsive-nav-link>
+                            @endcan
+                            @can('Gestionar CTAs')
+                                <x-responsive-nav-link href="{{ route('composiciones.index') }}" :active="request()->routeIs('composiciones.*')">
+                                    {{ __('Composiciones') }}
                                 </x-responsive-nav-link>
                             @endcan
                         </div>

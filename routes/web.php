@@ -91,15 +91,20 @@ Route::middleware([
     // -----------------------------------------------
     // CTAs
     // -----------------------------------------------
+    // ⚠️ IMPORTANTE: ctas.create DEBE ir antes de ctas.show
+    // para que /ctas/crear no se confunda con /ctas/{id}
+    Route::middleware('can:Gestionar CTAs')->group(function () {
+        Route::get('/ctas/crear', fn() => view('paginas.crear-cta'))
+            ->name('ctas.create');
+
+        Route::get('/admin/composiciones', fn() => view('paginas.composiciones'))
+            ->name('composiciones.index');
+    });
+
     Route::middleware('can:Ver CTAs')->group(function () {
         Route::get('/ctas', fn() => view('paginas.ctas-index'))->name('ctas.index');
         Route::get('/ctas/{id}', fn($id) => view('paginas.cta-detail', ['id' => $id]))
             ->name('ctas.show');
-    });
-
-    Route::middleware('can:Gestionar CTAs')->group(function () {
-        Route::get('/admin/composiciones', fn() => view('paginas.composiciones'))
-            ->name('composiciones.index');
     });
 
     // -----------------------------------------------

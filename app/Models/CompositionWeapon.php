@@ -7,7 +7,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CompositionWeapon extends Model
 {
-    protected $fillable = ['composition_id', 'weapon_name', 'weapon_icon', 'sort_order'];
+    protected $fillable = [
+        'composition_id',
+        'weapon_name',
+        'weapon_icon',
+        'sort_order',
+        'active',
+    ];
+
+    protected $casts = [
+        'active' => 'boolean',
+    ];
 
     public function composition(): BelongsTo
     {
