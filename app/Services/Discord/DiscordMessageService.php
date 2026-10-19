@@ -66,7 +66,6 @@ class DiscordMessageService
             }
 
             return $response->json();
-
         } catch (\Throwable $e) {
             Log::error('DiscordMessageService: excepción al enviar mensaje', [
                 'channel_id' => $channelId,
@@ -104,11 +103,44 @@ class DiscordMessageService
             }
 
             return $response->json();
-
         } catch (\Throwable $e) {
             Log::error('DiscordMessageService: excepción al crear evento', [
                 'guild_id' => $guildId,
                 'error'    => $e->getMessage(),
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Edita un mensaje existente en Discord (PATCH).
+     */
+    public function editMessage(string $channelId, string $messageId, array $payload): ?array
+    {
+        if (empty($this->botToken) || empty($channelId) || empty($messageId)) {
+            Log::warning('DiscordMessageService::editMessage: parámetros incompletos.');
+            return null;
+        }
+
+        try {
+            $response = Http::withToken($this->botToken, 'Bot')
+                ->timeout($this->timeout)
+                ->patch("{$this->apiBase}/channels/{$channelId}/messages/{$messageId}", $payload);
+
+            if (!$response->successful()) {
+                Log::warning('DiscordMessageService: edición fallida', [
+                    'channel_id' => $channelId,
+                    'message_id' => $messageId,
+                    'status'     => $response->status(),
+                    'body'       => Str::limit($response->body(), 500),
+                ]);
+                return null;
+            }
+
+            return $response->json();
+        } catch (\Throwable $e) {
+            Log::error('DiscordMessageService: excepción al editar', [
+                'error' => $e->getMessage(),
             ]);
             return null;
         }

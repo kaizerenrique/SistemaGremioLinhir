@@ -11,7 +11,7 @@ class Cta extends Model
     protected $fillable = [
         'composition_id', 'title', 'location',
         'start_time', 'end_time', 'reminder_at', 'reminder_minutes', 'reminder_sent',
-        'status', 'paid', 'pro_guild',
+        'status', 'paid', 'pro_guild', 'image_url',
         'discord_message_id', 'discord_channel_id', 'discord_event_id', 'discord_role_id',
         'created_by_discord_id', 'created_by_name',
     ];

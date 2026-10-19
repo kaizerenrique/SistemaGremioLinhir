@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Log;
 
 class CtaService
 {
@@ -153,5 +154,149 @@ class CtaService
     public function markReminderSent(int $ctaId): void
     {
         Cta::whereKey($ctaId)->update(['reminder_sent' => true]);
+    }
+
+    /**
+     * Actualiza los datos básicos de una CTA ya creada.
+     * Recalcula reminder_at si cambia el start_time. Resetea reminder_sent
+     * si cambian las horas (para que se dispare de nuevo el recordatorio).
+     */
+    public function update(Cta $cta, array $data): Cta
+    {
+        if ($cta->status !== 'scheduled') {
+            throw ValidationException::withMessages([
+                'status' => 'Solo se pueden editar CTAs programadas.',
+            ]);
+        }
+
+        $start = Carbon::parse($data['start_time'])->utc();
+        $end   = Carbon::parse($data['end_time'])->utc();
+
+        if ($end <= $start) {
+            throw ValidationException::withMessages([
+                'end_time' => 'La hora de fin debe ser posterior al inicio.',
+            ]);
+        }
+
+        $reminderMinutes = (int) ($data['reminder_minutes'] ?? $cta->reminder_minutes);
+        $reminderAt      = $start->copy()->subMinutes($reminderMinutes);
+        $timeChanged     = $cta->start_time->ne($start) || $cta->end_time->ne($end);
+
+        $payload = [
+            'title'            => $data['title'],
+            'location'         => $data['location'],
+            'start_time'       => $start,
+            'end_time'         => $end,
+            'reminder_minutes' => $reminderMinutes,
+            'reminder_at'      => $reminderAt,
+        ];
+
+        if ($timeChanged) {
+            $payload['reminder_sent'] = false;
+        }
+
+        if (array_key_exists('image_url', $data)) {
+            $payload['image_url'] = $data['image_url'];
+        }
+
+        $cta->update($payload);
+        return $cta->fresh();
+    }
+
+    /**
+     * Asigna un personaje a un arma. Si el arma ya tenía ocupante, ese
+     * ocupante pasa a 'absent' (libera el arma).
+     *
+     * Si el personaje ya estaba en la CTA (en otra arma), se mueve.
+     *
+     * @throws ValidationException
+     */
+    public function assignWeapon(
+        Cta $cta,
+        int $weaponId,
+        int $personajeId,
+        string $performedBy
+    ): CtaParticipant {
+        if ($cta->status !== 'scheduled') {
+            throw ValidationException::withMessages([
+                'status' => 'Solo se pueden editar CTAs programadas.',
+            ]);
+        }
+
+        return DB::transaction(function () use ($cta, $weaponId, $personajeId, $performedBy) {
+            $personaje = Personaje::findOrFail($personajeId);
+
+            if (!$personaje->miembro || empty($personaje->discord_user_id)) {
+                throw ValidationException::withMessages([
+                    'personaje' => 'El personaje no es miembro activo con Discord vinculado.',
+                ]);
+            }
+
+            // Validar que el arma pertenece a la composición de la CTA
+            $weapon = CompositionWeapon::where('composition_id', $cta->composition_id)
+                ->where('active', true)
+                ->findOrFail($weaponId);
+
+            // Liberar el arma si estaba ocupada por otro
+            CtaParticipant::where('cta_id', $cta->id)
+                ->where('composition_weapon_id', $weaponId)
+                ->where('discord_user_id', '!=', $personaje->discord_user_id)
+                ->where('status', 'confirmed')
+                ->update([
+                    'composition_weapon_id' => null,
+                    'status'                => 'absent',
+                    'participation_percent' => 0,
+                ]);
+
+            // Upsert del participante
+            $existing = CtaParticipant::where('cta_id', $cta->id)
+                ->where('discord_user_id', $personaje->discord_user_id)
+                ->first();
+
+            if ($existing) {
+                $existing->update([
+                    'composition_weapon_id' => $weaponId,
+                    'status'                => 'confirmed',
+                    'participation_percent' => 100,
+                    'user_name'             => $personaje->Name,
+                    'personaje_id'          => $personaje->id,
+                ]);
+                $p = $existing->fresh();
+            } else {
+                $p = CtaParticipant::create([
+                    'cta_id'                => $cta->id,
+                    'discord_user_id'       => $personaje->discord_user_id,
+                    'user_name'             => $personaje->Name,
+                    'personaje_id'          => $personaje->id,
+                    'composition_weapon_id' => $weaponId,
+                    'status'                => 'confirmed',
+                    'participation_percent' => 100,
+                ]);
+            }
+
+            Log::info('CTA weapon assigned', [
+                'cta_id'      => $cta->id,
+                'weapon_id'   => $weaponId,
+                'personaje'   => $personaje->Name,
+                'performed_by' => $performedBy,
+            ]);
+
+            return $p;
+        });
+    }
+
+    /**
+     * Libera un arma (marca al participante como 'absent').
+     */
+    public function unassignWeapon(Cta $cta, int $weaponId): void
+    {
+        CtaParticipant::where('cta_id', $cta->id)
+            ->where('composition_weapon_id', $weaponId)
+            ->where('status', 'confirmed')
+            ->update([
+                'composition_weapon_id' => null,
+                'status'                => 'absent',
+                'participation_percent' => 0,
+            ]);
     }
 }
