@@ -54,6 +54,11 @@ Route::middleware([
     // Batallas
     // -----------------------------------------------
     Route::middleware('can:Ver Batallas')->group(function () {
+        
+        Route::get('/battles/multi', fn(Request $request) => view('paginas.battle-multi', [
+            'ids' => (string) $request->query('ids', ''),
+        ]))->name('battles.multi');
+
         Route::get('/battles', fn() => view('paginas.battles'))->name('battles.index');
 
         Route::get('/battles/{id}', fn($id) => view('paginas.battle-detail', ['id' => $id]))
