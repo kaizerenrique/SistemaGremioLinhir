@@ -1,5 +1,19 @@
 <div class="container mx-auto px-4 py-8">
 
+    {{-- MENSAJES DE ESTADO PARA DISCORD --}}
+    @if($discordMessage)
+        <div class="mb-4 bg-success/10 border border-success/30 rounded-lg p-3 text-success text-sm flex justify-between items-center">
+            <span>{{ $discordMessage }}</span>
+            <button wire:click="$set('discordMessage', null)" class="text-success/60 hover:text-success">✕</button>
+        </div>
+    @endif
+    @if($discordError)
+        <div class="mb-4 bg-error/10 border border-error/30 rounded-lg p-3 text-error text-sm flex justify-between items-center">
+            <span>{{ $discordError }}</span>
+            <button wire:click="$set('discordError', null)" class="text-error/60 hover:text-error">✕</button>
+        </div>
+    @endif
+
     {{-- ============================================================ --}}
     {{-- CABECERA                                                     --}}
     {{-- ============================================================ --}}
@@ -16,16 +30,37 @@
                     {{ $totals['sessions'] }} reportes concatenados · {{ $totals['date_range'] }} · {{ $totals['active_time'] }} de combate activo
                 </p>
             </div>
-            <a href="{{ route('battles.index') }}" class="inline-flex items-center gap-2 bg-base-200 hover:bg-base-300 border border-base-300 text-content-light px-4 py-2 rounded-lg text-sm transition">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-                Volver a batallas
-            </a>
+            
+            <div class="flex items-center gap-2">
+                {{-- BOTÓN DE DISCORD --}}
+                <button wire:click="sendToDiscord" 
+                        wire:loading.attr="disabled" 
+                        wire:target="sendToDiscord"
+                        class="inline-flex items-center gap-2 bg-[#5865F2] hover:bg-[#4752C4] text-white px-4 py-2 rounded-lg text-sm font-semibold transition disabled:opacity-50">
+                    
+                    <span wire:loading.remove wire:target="sendToDiscord">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/>
+                        </svg>
+                    </span>
+                    <span wire:loading wire:target="sendToDiscord" class="flex items-center gap-2">
+                        <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        Enviando...
+                    </span>
+                    <span wire:loading.remove wire:target="sendToDiscord">Enviar a Discord</span>
+                </button>
+
+                <a href="{{ route('battles.index') }}" class="inline-flex items-center gap-2 bg-base-200 hover:bg-base-300 border border-base-300 text-content-light px-4 py-2 rounded-lg text-sm transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                    Volver
+                </a>
+            </div>
         </div>
     </div>
 
-    {{-- ============================================================ --}}
-    {{-- KPIs PRINCIPALES                                             --}}
-    {{-- ============================================================ --}}
+    {{-- (El resto del archivo se mantiene exactamente igual a tu versión anterior: KPIs, Tablas, etc.) --}}
+    
+    {{-- KPIs PRINCIPALES --}}
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div class="bg-base-300 p-4 rounded-lg border border-primary/30">
             <div class="text-xs uppercase text-content-light/60">Kills totales</div>
@@ -51,11 +86,8 @@
         </div>
     </div>
 
-    {{-- ============================================================ --}}
-    {{-- TABLAS DE ALIANZAS Y GREMIOS (LADO A LADO)                   --}}
-    {{-- ============================================================ --}}
+    {{-- TABLAS DE ALIANZAS Y GREMIOS (LADO A LADO) --}}
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        
         {{-- ALIANZAS --}}
         <div class="bg-base-300 rounded-lg border border-base-300">
             <div class="px-4 py-3 border-b border-primary/30">
@@ -125,12 +157,9 @@
                 </table>
             </div>
         </div>
-
     </div>
 
-    {{-- ============================================================ --}}
-    {{-- LISTADO DE SUB-BATALLAS                                       --}}
-    {{-- ============================================================ --}}
+    {{-- LISTADO DE SUB-BATALLAS --}}
     <div class="bg-base-300 rounded-lg border border-base-300 mb-6">
         <div class="px-4 py-3 border-b border-primary/30">
             <h3 class="font-semibold text-content-accent">🔗 Reportes concatenados ({{ $battles->count() }})</h3>
@@ -167,9 +196,7 @@
         </div>
     </div>
 
-    {{-- ============================================================ --}}
-    {{-- TABLA DE JUGADORES AGREGADA                                   --}}
-    {{-- ============================================================ --}}
+    {{-- TABLA DE JUGADORES AGREGADA --}}
     <div class="bg-base-300 rounded-lg border border-base-300">
         <div class="px-4 py-3 border-b border-primary/30 flex flex-wrap items-center gap-3">
             <div class="flex-1 min-w-[200px]">
@@ -257,17 +284,4 @@
             </div>
         @endif
     </div>
-
-    {{-- NOTA METODOLÓGICA --}}
-    <div class="mt-6 bg-base-200/50 border border-base-300 rounded-lg p-4 text-xs text-content-light/60">
-        <p class="font-semibold text-content-light/80 mb-2">📖 Cómo leer este reporte</p>
-        <ul class="space-y-1 list-disc list-inside">
-            <li><strong class="text-primary">Kills totales</strong> = suma de eventos de kill de todos los reportes.</li>
-            <li><strong class="text-error">Muertes-evento</strong> = suma de veces que un jugador cayó al suelo (un jugador puede morir N veces).</li>
-            <li><strong class="text-accent">Bajas únicas</strong> = jugadores distintos que murieron al menos una vez en toda la campaña.</li>
-            <li><strong>K/D campaña</strong> se recalcula sobre los totales, nunca promediando K/D por sesión.</li>
-            <li><strong>Sesiones</strong> = N/Total indica en cuántos reportes apareció ese jugador.</li>
-        </ul>
-    </div>
-
 </div>

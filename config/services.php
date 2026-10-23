@@ -52,6 +52,8 @@ return [
         'blog_mention' => env('DISCORD_BLOG_MENTION', '@everyone'),
         //rol para el bot de tareas
         'officer_role_id' => env('DISCORD_OFFICER_ROLE_ID'),
+        //reportes de batalla
+        'battle_report_channel' => env('DISCORD_BATTLE_REPORT_CHANNEL_ID'),
     ],
 
     'blogger' => [

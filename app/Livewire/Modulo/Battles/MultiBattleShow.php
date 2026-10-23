@@ -11,9 +11,12 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use App\Models\BattleParticipant;
+use App\Services\Discord\DiscordMessageService;
+use Illuminate\Support\Facades\Log;
 
 class MultiBattleShow extends Component
 {
+    
     use WithPagination;
 
     public string|array $ids = [];
@@ -29,9 +32,13 @@ class MultiBattleShow extends Component
     // Resumen general
     public array $totals = [];
 
+    // Estado para el botón de Discord
+    public ?string $discordMessage = null;
+    public ?string $discordError = null;
+    public bool $sendingToDiscord = false;
+
     public function mount(string|array $ids): void
     {
-        // ---- 1. Parsear IDs ----
         $rawIds = is_string($ids) ? explode(',', $ids) : (array) $ids;
         
         $parsed = array_filter(
@@ -46,7 +53,6 @@ class MultiBattleShow extends Component
 
         $this->ids = $parsed;
 
-        // ---- 2. Cargar batallas (SIN participantes para evitar sobrecarga) ----
         $this->battles = Battle::whereIn('id', $this->ids)
             ->orderBy('start_time')
             ->get();
@@ -55,7 +61,6 @@ class MultiBattleShow extends Component
             abort(404, 'No se encontraron al menos 2 batallas con esos IDs.');
         }
 
-        // ---- 3. Calcular Totales Globales (Rápido con SQL) ----
         $this->calculateTotals();
     }
 
@@ -113,10 +118,6 @@ class MultiBattleShow extends Component
         ];
     }
 
-    // ==================================================================
-    //                      RESUMEN DE GREMIOS Y ALIANZAS
-    // ==================================================================
-
     public function getGuildsSummaryProperty()
     {
         return BattleParticipant::whereIn('battle_id', $this->ids)
@@ -157,10 +158,6 @@ class MultiBattleShow extends Component
             ->get();
     }
 
-    // ==================================================================
-    //                      TABLA DE JUGADORES (SQL PAGINADO)
-    // ==================================================================
-
     public function getPlayersProperty()
     {
         $query = BattleParticipant::whereIn('battle_id', $this->ids)
@@ -179,7 +176,6 @@ class MultiBattleShow extends Component
             )
             ->groupBy('battle_participants.player_id');
 
-        // Filtros
         if ($this->searchPlayer !== '') {
             $query->having('player_name', 'like', '%' . $this->searchPlayer . '%');
         }
@@ -187,7 +183,6 @@ class MultiBattleShow extends Component
             $query->having('guild_id', $this->guildFilter);
         }
 
-        // Ordenamiento
         $allowedSorts = ['kills', 'deaths', 'damage_done', 'healing_done', 'appearances', 'player_name', 'kill_fame'];
         $sort = in_array($this->sortField, $allowedSorts) ? $this->sortField : 'kills';
         $dir  = $this->sortDirection === 'asc' ? 'asc' : 'desc';
@@ -195,6 +190,113 @@ class MultiBattleShow extends Component
         $query->orderBy($sort, $dir);
 
         return $query->paginate($this->perPagePlayers, ['*'], 'playersPage');
+    }
+
+    // ==================================================================
+    //                      ENVIAR A DISCORD
+    // ==================================================================
+
+    public function sendToDiscord(DiscordMessageService $discord): void
+    {
+        $this->sendingToDiscord = true;
+        $this->discordMessage = null;
+        $this->discordError = null;
+
+        $channelId = config('services.discord.battle_report_channel');
+
+        if (empty($channelId)) {
+            $this->discordError = 'El canal de Discord para reportes no está configurado en el .env.';
+            $this->sendingToDiscord = false;
+            return;
+        }
+
+        try {
+            // 1. Obtener el Top 3 de jugadores por Kills (independiente de los filtros de la tabla)
+            $topPlayers = BattleParticipant::whereIn('battle_id', $this->ids)
+                ->selectRaw('MAX(player_name) as player_name, SUM(kills) as kills, SUM(deaths) as deaths')
+                ->groupBy('player_id')
+                ->orderByDesc('kills')
+                ->limit(3)
+                ->get();
+
+            // 2. Formatear strings para el Embed
+            $topPlayersText = $topPlayers->map(function ($p, $index) {
+                return "**" . ($index + 1) . ". " . $p->player_name . "** — " . $p->kills . " kills (" . $p->deaths . " muertes)";
+            })->join("\n");
+
+            $topGuildsText = $this->guildsSummary->take(3)->map(function ($g, $index) {
+                return "**" . ($index + 1) . ". " . $g->guild_name . "** — " . number_format($g->total_kills) . " kills";
+            })->join("\n");
+
+            $topAlliancesText = $this->alliancesSummary->take(3)->map(function ($a, $index) {
+                return "**" . ($index + 1) . ". " . $a->alliance_name . "** — " . number_format($a->total_kills) . " kills";
+            })->join("\n");
+
+            // 3. Construir el Embed
+            $embed = [
+                'title'       => '⚔️ Reporte Multi-Batalla — ' . $this->totals['sessions'] . ' sesiones',
+                'description' => "Periodo: **" . $this->totals['date_range'] . "**\n" .
+                                 "Tiempo de combate: **" . $this->totals['active_time'] . "**",
+                'color'       => 0xC54B47, // Color primary de Linhir
+                'fields'      => [
+                    [
+                        'name'   => '📊 Resumen de Campaña',
+                        'value'  => "**Kills Totales:** " . number_format($this->totals['kill_events'], 0, ',', '.') . "\n" .
+                                    "**Bajas Únicas:** " . $this->totals['unique_casualties'] . " de " . $this->totals['unique_players'] . " jugadores\n" .
+                                    "**K/D Campaña:** " . ($this->totals['kdr'] ?? '0.00') . "\n" .
+                                    "**Fama Total:** " . number_format($this->totals['total_fame'], 0, ',', '.'),
+                        'inline' => true,
+                    ],
+                    [
+                        'name'   => '🏆 TOP Jugadores (Kills)',
+                        'value'  => $topPlayersText ?: 'Sin datos',
+                        'inline' => true,
+                    ],
+                    [
+                        'name'   => '🛡️ TOP Gremios',
+                        'value'  => $topGuildsText ?: 'Sin datos',
+                        'inline' => true,
+                    ],
+                    [
+                        'name'   => '🤝 TOP Alianzas',
+                        'value'  => $topAlliancesText ?: 'Sin datos',
+                        'inline' => true,
+                    ],
+                    [
+                        'name'   => '🔗 Reportes Concatenados',
+                        'value'  => collect($this->ids)->map(fn($id) => "[#{$id}](" . route('battles.show', $id) . ")")->join(' · '),
+                        'inline' => false,
+                    ]
+                ],
+                'footer'    => [
+                    'text'     => 'Linhir System • Generado desde la web',
+                    'icon_url' => asset('imagenes/linhir_escudo_180.png'),
+                ],
+                'timestamp' => now()->toIso8601String(),
+            ];
+
+            $payload = [
+                'embeds' => [$embed]
+            ];
+
+            // 4. Enviar usando tu servicio existente
+            $result = $discord->sendMessage($channelId, $payload);
+
+            if ($result && !empty($result['id'])) {
+                $this->discordMessage = '¡Reporte enviado a Discord exitosamente!';
+            } else {
+                $this->discordError = 'No se pudo enviar el mensaje. Revisa los logs o la configuración del bot.';
+            }
+
+        } catch (\Throwable $e) {
+            Log::error('Error enviando multi-batalla a Discord', [
+                'ids' => $this->ids,
+                'error' => $e->getMessage()
+            ]);
+            $this->discordError = 'Ocurrió un error al enviar: ' . $e->getMessage();
+        } finally {
+            $this->sendingToDiscord = false;
+        }
     }
 
     // ==================================================================
