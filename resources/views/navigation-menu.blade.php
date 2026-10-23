@@ -94,7 +94,9 @@
                                     @can('Ver Batallas')
                                         <x-dropdown-link
                                             href="{{ route('battles.index') }}">{{ __('Batallas') }}</x-dropdown-link>
-                                    @endcan
+                                        <x-dropdown-link
+                                            href="{{ route('battles.war-analysis') }}">{{ __('Análisis de Guerra') }}</x-dropdown-link>
+                                    @endcan                                    
                                 </div>
                             </div>
                         @endif
@@ -369,6 +371,9 @@
                             @can('Ver Batallas')
                                 <x-responsive-nav-link href="{{ route('battles.index') }}" :active="request()->routeIs('battles.*')">
                                     {{ __('Batallas') }}
+                                </x-responsive-nav-link>
+                                <x-responsive-nav-link href="{{ route('battles.war-analysis') }}" :active="request()->routeIs('battles.*')">
+                                    {{ __('Análisis de Guerra') }}
                                 </x-responsive-nav-link>
                             @endcan
                         </div>

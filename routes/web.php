@@ -55,6 +55,10 @@ Route::middleware([
     // -----------------------------------------------
     Route::middleware('can:Ver Batallas')->group(function () {
 
+        // Análisis de Guerra
+        Route::get('/battles/war-analysis', fn() => view('paginas.war-analysis'))
+            ->name('battles.war-analysis');
+
         Route::get('/battles/multi', function () {
             return view('paginas.battle-multi', [
                 'ids' => (string) request()->query('ids', ''),
