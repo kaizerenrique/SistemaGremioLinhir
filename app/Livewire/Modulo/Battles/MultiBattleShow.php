@@ -11,8 +11,12 @@ use Illuminate\Support\Collection;
 
 class MultiBattleShow extends Component
 {
-    /** @var int[] IDs de las batallas concatenadas. */
-    public array $ids = [];
+    /** 
+     * IDs de las batallas concatenadas. 
+     * Se declara como string|array porque Livewire 3 inyecta el parámetro 
+     * antes de llamar a mount(), y el parámetro viene como string desde la URL.
+     */
+    public string|array $ids = [];
 
     /** @var \Illuminate\Database\Eloquent\Collection<Battle> */
     public $battles;
@@ -31,11 +35,13 @@ class MultiBattleShow extends Component
     /** Paginación de la tabla de jugadores. */
     public int $perPagePlayers = 25;
 
-    public function mount(string $ids): void
+    public function mount(string|array $ids): void
     {
         // ---- 1. Parsear IDs ----
+        $rawIds = is_string($ids) ? explode(',', $ids) : (array) $ids;
+        
         $parsed = array_filter(
-            array_map('intval', explode(',', $ids)),
+            array_map('intval', $rawIds),
             fn($id) => $id > 0
         );
         $parsed = array_values(array_unique($parsed));
