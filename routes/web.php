@@ -141,4 +141,12 @@ Route::middleware([
         Route::get('/admin/retiros', fn() => view('paginas.retiros-pendientes'))
             ->name('retiros.admin');
     });
+
+    // -----------------------------------------------
+    // Dashboard Administrativo (NUEVO)
+    // -----------------------------------------------
+    Route::middleware('can:Ver Usuarios')->group(function () {
+        Route::get('/admin/dashboard', fn() => view('paginas.admin-dashboard'))
+            ->name('admin.dashboard');
+    });
 });

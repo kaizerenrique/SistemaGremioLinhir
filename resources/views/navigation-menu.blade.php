@@ -176,6 +176,12 @@
                                         <x-dropdown-link
                                             href="{{ route('discord.index') }}">{{ __('Discord server') }}</x-dropdown-link>
                                     @endcan
+
+                                    @can('Ver Usuarios')
+                                        <x-dropdown-link href="{{ route('admin.dashboard') }}">
+                                            📊 Dashboard Overview
+                                        </x-dropdown-link>
+                                    @endcan
                                 </div>
                             </div>
                         @endif
@@ -447,6 +453,12 @@
                             @can('Ver Discord')
                                 <x-responsive-nav-link href="{{ route('discord.index') }}" :active="request()->routeIs('discord.*')">
                                     {{ __('Discord server') }}
+                                </x-responsive-nav-link>
+                            @endcan
+
+                            @can('Ver Usuarios')
+                                <x-responsive-nav-link href="{{ route('admin.dashboard') }}" :active="request()->routeIs('admin.dashboard')">
+                                    📊 Dashboard Overview
                                 </x-responsive-nav-link>
                             @endcan
                         </div>
