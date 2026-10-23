@@ -29,7 +29,7 @@
         </div>
     </div>
 
-    <!-- Alianzas y Gremios Implicados (lado a lado) -->
+    <!-- Alianzas y Gremios Implicados -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
         <!-- Alianzas -->
         <div class="bg-base-300 p-4 rounded-lg border border-base-300">
@@ -140,7 +140,7 @@
         </div>
     @endif
 
-    <!-- Estadísticas por Gremio (Tabla sin paginación) -->
+    <!-- Estadísticas por Gremio -->
     <div class="mb-8">
         <h3 class="text-xl font-semibold text-content-accent mb-4">Estadísticas por Gremio</h3>
         <div class="overflow-x-auto max-h-96 overflow-y-auto">
@@ -239,9 +239,64 @@
         </div>
     </div>
 
-    <!-- Equipamiento Perdido (deshabilitado temporalmente) -->
-    <div class="bg-base-300 p-4 rounded-lg border border-base-300 mb-4">
-        <h3 class="text-xl font-semibold text-content-accent mb-2">Equipamiento Perdido</h3>
-        <p class="text-content-light/70">⚠️ Esta sección está deshabilitada temporalmente mientras mejoramos el rendimiento. Volverá pronto.</p>
+    <!-- Equipamiento Perdido por Linhir -->
+    <div class="bg-base-300 p-4 rounded-lg border border-base-300 mb-8">
+        <div class="flex justify-between items-center mb-4 border-b border-primary/20 pb-2">
+            <h3 class="text-xl font-semibold text-content-accent">🛡️ Equipamiento Perdido por Linhir</h3>
+            <span class="text-xs text-content-light/50">Total de muertes: {{ collect($linhirLosses)->sum('deaths') }}</span>
+        </div>
+        
+        @if(empty($linhirLosses))
+            <div class="text-center text-content-light/60 py-6">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto mb-2 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p class="text-sm">¡Nadie de Linhir murió en esta batalla o no hay datos de equipamiento!</p>
+            </div>
+        @else
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                @foreach($linhirLosses as $loss)
+                    <div class="bg-base-200/50 rounded-lg border border-base-300 p-4">
+                        <!-- Cabecera del jugador -->
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="font-bold text-content-light text-lg">{{ $loss['name'] }}</span>
+                            <span class="bg-error/20 text-error px-2 py-1 rounded text-xs font-bold">
+                                {{ $loss['deaths'] }} {{ $loss['deaths'] === 1 ? 'muerte' : 'muertes' }}
+                            </span>
+                        </div>
+                        
+                        <!-- Lista de ítems perdidos -->
+                        <div class="flex flex-wrap gap-2">
+                            @foreach($loss['items'] as $itemName => $data)
+                                <div class="relative group">
+                                    <!-- Icono del ítem -->
+                                    <div class="w-12 h-12 bg-base-300 rounded border border-base-300 flex items-center justify-center p-1">
+                                        @if($data['image'])
+                                            <img src="{{ $data['image'] }}" alt="{{ $itemName }}" class="w-full h-full object-contain">
+                                        @else
+                                            <span class="text-[10px] text-center leading-tight">{{ $itemName }}</span>
+                                        @endif
+                                    </div>
+                                    
+                                    <!-- Badge de cantidad (si perdió más de 1) -->
+                                    @if($data['count'] > 1)
+                                        <span class="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow">
+                                            x{{ $data['count'] }}
+                                        </span>
+                                    @endif
+
+                                    <!-- Tooltip con el nombre -->
+                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block z-10">
+                                        <div class="bg-base-100 text-content-light text-xs px-2 py-1 rounded shadow-lg whitespace-nowrap border border-base-300">
+                                            T{{ $data['tier'] }} {{ $itemName }}
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @endif
     </div>
 </div>

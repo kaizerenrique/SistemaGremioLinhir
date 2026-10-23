@@ -9,6 +9,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
 use App\Models\Battle;
 use App\Models\KillEvent;
 use App\Models\BattleParticipant;
@@ -174,23 +175,23 @@ class ProcessBattle implements ShouldQueue
             ]
         );
 
-        // Equipamiento del asesino
-    //    if (isset($event['Killer']['Equipment'])) {
-    //        foreach ($event['Killer']['Equipment'] as $slot => $item) {
-    //            if ($item) {
-    //                $this->storeEquipment($killEvent->id, 'killer', $slot, $item);
-    //            }
-    //        }
-    //    }
+        // 👇 EQUIPAMIENTO DEL ASESINO
+        if (isset($event['Killer']['Equipment'])) {
+            foreach ($event['Killer']['Equipment'] as $slot => $item) {
+                if ($item) {
+                    $this->storeEquipment($killEvent->id, 'killer', $slot, $item);
+                }
+            }
+        }
 
-        // Equipamiento de la víctima
-    //    if (isset($event['Victim']['Equipment'])) {
-    //        foreach ($event['Victim']['Equipment'] as $slot => $item) {
-    //            if ($item) {
-    //                $this->storeEquipment($killEvent->id, 'victim', $slot, $item);
-    //            }
-    //        }
-    //    }
+        // 👇 EQUIPAMIENTO DE LA VÍCTIMA
+        if (isset($event['Victim']['Equipment'])) {
+            foreach ($event['Victim']['Equipment'] as $slot => $item) {
+                if ($item) {
+                    $this->storeEquipment($killEvent->id, 'victim', $slot, $item);
+                }
+            }
+        }
 
         // Participantes y estadísticas de daño
         if (isset($event['Participants'])) {
@@ -227,31 +228,33 @@ class ProcessBattle implements ShouldQueue
     {
         $uniqueName = $itemData['Type'];
 
-        // Verificar si el ítem ya existe
-        $item = Item::firstOrNew(['unique_name' => $uniqueName]);
-        
+        // Verificar si el ítem ya existe usando Cache para no saturar la API en la misma batalla
+        $item = Cache::remember("albion_item_{$uniqueName}", 86400, function () use ($uniqueName) {
+            $dbItem = Item::firstOrNew(['unique_name' => $uniqueName]);
 
-        if (!$item->exists) {
-            // Obtener datos del ítem desde la API
-            $response = Http::get("https://gameinfo.albiononline.com/api/gameinfo/items/$uniqueName/data");
-            if ($response->successful()) {
-                $info = $response->json();
-                $item->fill([
-                    'item_type' => $info['itemType'] ?? null,
-                    'tier' => $info['tier'] ?? null,
-                    'enchantment_level' => $info['enchantmentLevel'] ?? 0,
-                    'sprite_name' => $info['spriteName'] ?? null,
-                    'localized_names' => $info['localizedNames'] ?? null,
-                    'localized_descriptions' => $info['localizedDescriptions'] ?? null,
-                    'image_url' => null,
-                    'last_updated' => now(),
-                ]);
-                $item->save();
-            } else {
-                // Si falla, guardamos solo el uniqueName para no perder la referencia
-                $item->save();
+            if (!$dbItem->exists) {
+                // Obtener datos del ítem desde la API
+                $response = Http::get("https://gameinfo.albiononline.com/api/gameinfo/items/{$uniqueName}/data");
+                if ($response->successful()) {
+                    $info = $response->json();
+                    $dbItem->fill([
+                        'item_type' => $info['itemType'] ?? null,
+                        'tier' => $info['tier'] ?? null,
+                        'enchantment_level' => $info['enchantmentLevel'] ?? 0,
+                        'sprite_name' => $info['spriteName'] ?? null,
+                        'localized_names' => $info['localizedNames'] ?? null,
+                        'localized_descriptions' => $info['localizedDescriptions'] ?? null,
+                        'image_url' => null,
+                        'last_updated' => now(),
+                    ]);
+                    $dbItem->save();
+                } else {
+                    // Si falla, guardamos solo el uniqueName para no perder la referencia
+                    $dbItem->save();
+                }
             }
-        }
+            return $dbItem;
+        });
 
         // Guardar equipamiento
         KillEventEquipment::create([

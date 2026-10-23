@@ -13,7 +13,7 @@ class BattleShow extends Component
     public $battle;
     public $participants;
     public $killEvents;
-    public $lostEquipment;
+    public $linhirLosses = []; // Propiedad correcta
     public $topKills = null;
     public $topHeals = null;
     public $topDamage = null;
@@ -63,29 +63,47 @@ class BattleShow extends Component
             ->orderBy('timestamp', 'asc')
             ->get();
 
-        // Equipamiento perdido
-        $lostItems = [];
-        foreach ($this->killEvents as $event) {
-            $victimId = $event->victim_id;
-            if (!isset($lostItems[$victimId])) {
-                $lostItems[$victimId] = [
-                    'player_name' => $event->victim_name,
-                    'guild_name' => $event->victimGuild ? $event->victimGuild->name : 'Sin gremio',
-                    'items' => [],
+        // LÓGICA DE EQUIPAMIENTO PERDIDO PARA LINHIR
+        $linhirGuildId = config('app.linhir_gremio_id');
+
+        // Filtramos los eventos donde la víctima es de Linhir
+        $linhirDeaths = $this->killEvents->where('victim_guild_id', $linhirGuildId);
+
+        $losses = [];
+        foreach ($linhirDeaths as $event) {
+            $playerName = $event->victim_name;
+
+            if (!isset($losses[$playerName])) {
+                $losses[$playerName] = [
+                    'name' => $playerName,
+                    'deaths' => 0,
+                    'items' => []
                 ];
             }
+
+            $losses[$playerName]['deaths']++;
+
+            // Agrupar los ítems perdidos
             foreach ($event->victimEquipment as $equip) {
-                $item = $equip->item;
-                $lostItems[$victimId]['items'][] = [
-                    'slot' => $equip->slot,
-                    'item_type' => $equip->item_type,
-                    'quality' => $equip->quality,
-                    'item_name' => $item ? $item->getLocalizedName() : $equip->item_type,
-                    'image_url' => $item ? $item->image_url : null, // ✅ Ya usa la URL con "/"
-                ];
+                $itemName = $equip->item ? $equip->item->display_name : $equip->item_type;
+                $imageUrl = $equip->item ? $equip->item->image_url : null;
+
+                if (!isset($losses[$playerName]['items'][$itemName])) {
+                    $losses[$playerName]['items'][$itemName] = [
+                        'count' => 0,
+                        'image' => $imageUrl,
+                        'tier'  => $equip->item ? $equip->item->tier : 0,
+                    ];
+                }
+                $losses[$playerName]['items'][$itemName]['count'] += $equip->count;
             }
         }
-        $this->lostEquipment = collect($lostItems);
+
+        // Ordenamos por cantidad de muertes (de mayor a menor)
+        uasort($losses, fn($a, $b) => $b['deaths'] <=> $a['deaths']);
+
+        // Convertimos a array
+        $this->linhirLosses = array_values($losses);
     }
 
     public function render()
@@ -112,7 +130,7 @@ class BattleShow extends Component
             ->pluck('guild')
             ->filter();
 
-        // Estadísticas por gremio (todas)
+        // Estadísticas por gremio
         $guildStats = $this->battle->participants()
             ->select('guild_id', DB::raw('SUM(kills) as total_kills'), DB::raw('SUM(deaths) as total_deaths'), DB::raw('AVG(average_item_power) as avg_ip'))
             ->whereNotNull('guild_id')
@@ -132,7 +150,7 @@ class BattleShow extends Component
             'topDamage' => $this->topDamage,
             'topKillFame' => $this->topKillFame,
             'killEvents' => $this->killEvents,
-            'lostEquipment' => $this->lostEquipment,
+            'linhirLosses' => $this->linhirLosses, // 👈 Pasamos la nueva variable a la vista
             'guildFilter' => $this->guildFilter,
         ]);
     }
