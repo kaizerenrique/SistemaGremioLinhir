@@ -12,12 +12,18 @@ class Personaje extends Model
         'Name',
         'Id_albion',
         'GuildId',
+        'allied_guild_id', 
         'miembro',
         'birthdate'
     ];
 
     public function user(){
         return $this->belongsTo(User::class);
+    }
+
+    public function alliedGuild()
+    {
+        return $this->belongsTo(AlliedGuild::class);
     }
 
     public function lifetimeStatistics()

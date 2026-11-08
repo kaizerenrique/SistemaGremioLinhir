@@ -55,6 +55,8 @@ Route::prefix('bot')->middleware(['auth:sanctum', 'ability:read'])->group(functi
     Route::post('/search-character', [IdentityController::class, 'searchCharacter']);
     Route::get('/members/{discord_user_id}/balance', [IdentityController::class, 'balance']);
 
+    Route::get('/allied-guilds', [IdentityController::class, 'alliedGuilds']);
+
         // CTAs
     Route::get ('/ctas/active',             [CtaController::class, 'active']);
     Route::get ('/ctas/pending-reminders',  [CtaController::class, 'pendingReminders']);
