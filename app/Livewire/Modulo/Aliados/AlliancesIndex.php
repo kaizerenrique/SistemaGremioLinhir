@@ -25,7 +25,9 @@ class AlliancesIndex extends Component
     public string $color           = '#9A8667';
     public string $notes           = '';
     public ?string $discord_role_id = null;
-    public bool $roleFound          = false;   // true si detectamos rol existente
+
+    // Listado de roles disponibles en Discord
+    public array $availableRoles = [];
 
     // Confirmación de desactivación
     public bool $showConfirm = false;
@@ -43,8 +45,15 @@ class AlliancesIndex extends Component
 
     public function updatingBuscar(): void { $this->resetPage(); }
 
-    public function render()
+    public function render(DiscordRoleService $discord)
     {
+        // Cargar los roles de Discord para el selector
+        $roles = $discord->listRoles();
+        $this->availableRoles = collect($roles)
+            ->mapWithKeys(fn($r) => [$r['id'] => $r['name']])
+            ->sort()
+            ->toArray();
+
         $guilds = AlliedGuild::query()
             ->when($this->buscar, fn($q) =>
                 $q->where('guild_name', 'like', "%{$this->buscar}%")
@@ -172,7 +181,7 @@ class AlliancesIndex extends Component
     //                    CREAR / CONFIGURAR GREMIO
     // ================================================================
 
-    public function openConfigure(int $id, DiscordRoleService $discord): void
+    public function openConfigure(int $id): void
     {
         $g = AlliedGuild::findOrFail($id);
 
@@ -183,18 +192,8 @@ class AlliancesIndex extends Component
         $this->color           = $g->color;
         $this->notes           = $g->notes ?? '';
         $this->discord_role_id = $g->discord_role_id;
-        $this->roleFound       = false;
+        
         $this->resetValidation();
-
-        // Si hay TAG pero no rol, buscar uno existente por nombre
-        if (!empty($this->tag) && empty($this->discord_role_id)) {
-            $existing = $discord->findRoleByName($this->tag);
-            if ($existing) {
-                $this->discord_role_id = $existing['id'];
-                $this->roleFound       = true;
-            }
-        }
-
         $this->showModal = true;
     }
 
@@ -207,7 +206,7 @@ class AlliancesIndex extends Component
         $this->color           = '#9A8667';
         $this->notes           = '';
         $this->discord_role_id = null;
-        $this->roleFound       = false;
+        
         $this->resetValidation();
         $this->showModal = true;
     }
@@ -225,31 +224,6 @@ class AlliancesIndex extends Component
         $this->guild_name = $guild['name'] ?? '';
     }
 
-    /**
-     * Detecta si existe un rol en Discord con el nombre del TAG.
-     * El admin puede aceptarlo (usar ese rol) o rechazarlo (crear uno nuevo).
-     */
-    public function detectRole(DiscordRoleService $discord): void
-    {
-        $this->errorMessage = null;
-        $this->roleFound    = false;
-        $this->discord_role_id = null;
-
-        $tagName = strtoupper(trim($this->tag));
-        if ($tagName === '') {
-            $this->errorMessage = 'Define el TAG primero.';
-            return;
-        }
-
-        $existing = $discord->findRoleByName($tagName);
-        if ($existing) {
-            $this->discord_role_id = $existing['id'];
-            $this->roleFound       = true;
-        } else {
-            $this->successMessage = "No existe rol «{$tagName}» en Discord. Se creará uno nuevo al guardar.";
-        }
-    }
-
     public function save(
         GuildLookupService $lookup,
         DiscordRoleService $discord,
@@ -258,31 +232,43 @@ class AlliancesIndex extends Component
         $this->tag = strtoupper(trim($this->tag));
 
         $this->validate([
-            'guild_id'   => 'required|string|max:64',
-            'guild_name' => 'required|string|max:255',
-            'tag'        => 'required|string|regex:/^[A-Z0-9]{2,4}$/|unique:allied_guilds,tag,' . ($this->editingId ?? 'NULL'),
-            'color'      => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
-            'notes'      => 'nullable|string|max:1000',
+            'guild_id'         => 'required|string|max:64',
+            'guild_name'       => 'required|string|max:255',
+            'tag'              => 'required|string|regex:/^[A-Z0-9]{2,4}$/|unique:allied_guilds,tag,' . ($this->editingId ?? 'NULL'),
+            'color'            => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'discord_role_id'  => 'nullable|string|max:32',
+            'notes'            => 'nullable|string|max:1000',
         ], [
             'tag.regex'  => 'TAG: 2-4 caracteres alfanuméricos en mayúsculas.',
             'tag.unique' => 'Ya existe un gremio con ese TAG.',
         ]);
 
-        // Verificar en Albion
+        // Verificar en Albion (con fallback por si la API falla al editar)
         $albionGuild = $lookup->findById($this->guild_id);
         if (!$albionGuild) {
-            $this->errorMessage = 'Gremio no encontrado en Albion.';
-            return;
+            if ($this->editingId) {
+                $existing = AlliedGuild::findOrFail($this->editingId);
+                $albionGuild = [
+                    'id'           => $existing->guild_id,
+                    'name'         => $existing->guild_name,
+                    'allianceName' => $existing->alliance_name,
+                ];
+            } else {
+                $this->errorMessage = 'Gremio no encontrado en Albion o la API no está disponible.';
+                return;
+            }
         }
 
-        // Resolver el rol: usar existente o crear
+        // -------------------------------------------------------------
+        // RESOLVER EL ROL
+        // -------------------------------------------------------------
         $role = null;
 
+        // Si el admin seleccionó un rol del desplegable, lo usamos
         if (!empty($this->discord_role_id)) {
-            // El admin ya había detectado un rol existente
             $role = ['id' => $this->discord_role_id];
         } else {
-            // findOrCreateRole busca por nombre primero, crea si no existe
+            // Si no, creamos o buscamos por el TAG
             $role = $discord->findOrCreateRole(
                 name:  $this->tag,
                 color: $this->color,
@@ -362,8 +348,7 @@ class AlliancesIndex extends Component
     private function resetForm(): void
     {
         $this->reset([
-            'editingId', 'guild_id', 'guild_name', 'tag', 'notes',
-            'discord_role_id', 'roleFound',
+            'editingId', 'guild_id', 'guild_name', 'tag', 'notes', 'discord_role_id'
         ]);
         $this->color = '#9A8667';
         $this->resetValidation();

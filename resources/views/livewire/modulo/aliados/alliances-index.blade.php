@@ -2,13 +2,14 @@
     {{-- ============================================================== --}}
     {{-- MENSAJES DE FEEDBACK                                          --}}
     {{-- ============================================================== --}}
-    @if($successMessage)
-        <div class="bg-success/10 border border-success/30 rounded-lg p-3 text-success text-sm mb-3 flex justify-between">
+    @if ($successMessage)
+        <div
+            class="bg-success/10 border border-success/30 rounded-lg p-3 text-success text-sm mb-3 flex justify-between">
             <span>{{ $successMessage }}</span>
             <button wire:click="$set('successMessage', null)">✕</button>
         </div>
     @endif
-    @if($errorMessage)
+    @if ($errorMessage)
         <div class="bg-error/10 border border-error/30 rounded-lg p-3 text-error text-sm mb-3 flex justify-between">
             <span>{{ $errorMessage }}</span>
             <button wire:click="$set('errorMessage', null)">✕</button>
@@ -21,8 +22,8 @@
     <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
         <h3 class="font-semibold text-base text-content-light">Gremios Aliados (HRL)</h3>
         <div class="flex gap-2 flex-wrap">
-            <x-input type="search" wire:model.live.debounce.300ms="buscar"
-                     placeholder="Buscar por nombre o TAG..." class="w-56" />
+            <x-input type="search" wire:model.live.debounce.300ms="buscar" placeholder="Buscar por nombre o TAG..."
+                class="w-56" />
             <x-secondary-button wire:click="openSyncModal">
                 🔄 Sincronizar desde Albion
             </x-secondary-button>
@@ -57,14 +58,30 @@
                             <div class="text-xs text-content-light/50 font-mono">{{ $g->guild_id }}</div>
                         </td>
                         <td class="px-4 py-3 text-sm">
-                            @if($g->discord_role_id)
-                                <code class="text-xs">{{ $g->discord_role_id }}</code>
+                            @if ($g->discord_role_id)
+                                @php
+                                    // Buscamos el nombre del rol usando el ID
+                                    $roleName = $availableRoles[$g->discord_role_id] ?? null;
+                                @endphp
+
+                                @if ($roleName)
+                                    {{-- Si lo encuentra, muestra el nombre y el ID como tooltip --}}
+                                    <span class="text-content-light font-medium" title="ID: {{ $g->discord_role_id }}">
+                                        {{ $roleName }}
+                                    </span>
+                                @else
+                                    {{-- Si el rol no está en la lista (ej. borrado de Discord), muestra advertencia --}}
+                                    <span class="text-warning text-xs" title="ID: {{ $g->discord_role_id }}">
+                                        ⚠️ Rol desconocido (ID:
+                                        {{ \Illuminate\Support\Str::limit($g->discord_role_id, 8, '...') }})
+                                    </span>
+                                @endif
                             @else
                                 <span class="text-warning text-xs">⚠️ Sin rol</span>
                             @endif
                         </td>
                         <td class="px-4 py-3 text-sm">
-                            @if(!$g->is_configured)
+                            @if (!$g->is_configured)
                                 <span class="bg-warning/20 text-warning px-2 py-1 rounded-full text-xs">
                                     ⚠️ Pendiente
                                 </span>
@@ -75,19 +92,19 @@
                             @endif
                         </td>
                         <td class="px-4 py-3 text-right">
-                            @if(!$g->is_configured)
+                            @if (!$g->is_configured)
                                 <button wire:click="openConfigure({{ $g->id }})"
-                                        class="text-info hover:text-info/80 text-xs mr-2">
+                                    class="text-info hover:text-info/80 text-xs mr-2">
                                     Configurar
                                 </button>
                             @elseif($g->active)
                                 <button wire:click="confirmDeactivate({{ $g->id }})"
-                                        class="text-error hover:text-error/80 text-xs">
+                                    class="text-error hover:text-error/80 text-xs">
                                     Desactivar
                                 </button>
                             @else
                                 <button wire:click="activate({{ $g->id }})"
-                                        class="text-success hover:text-success/80 text-xs">
+                                    class="text-success hover:text-success/80 text-xs">
                                     Activar
                                 </button>
                             @endif
@@ -96,7 +113,8 @@
                 @empty
                     <tr>
                         <td colspan="5" class="px-4 py-6 text-center text-content-light/70">
-                            No hay gremios aliados registrados. Usa "🔄 Sincronizar desde Albion" para importar el roster de la HRL.
+                            No hay gremios aliados registrados. Usa "🔄 Sincronizar desde Albion" para importar el
+                            roster de la HRL.
                         </td>
                     </tr>
                 @endforelse
@@ -111,13 +129,13 @@
     <x-dialog-modal wire:model="showSyncModal" maxWidth="2xl">
         <x-slot name="title">Sincronizar con la alianza HRL en Albion</x-slot>
         <x-slot name="content">
-            @if($syncError)
+            @if ($syncError)
                 <div class="bg-error/10 border border-error/30 rounded p-3 text-error text-sm mb-3">
                     {{ $syncError }}
                 </div>
             @endif
 
-            @if(!empty($syncDiff['alliance']))
+            @if (!empty($syncDiff['alliance']))
                 <div class="mb-4 p-3 bg-base-200 rounded">
                     <div class="text-xs text-content-light/60 uppercase">Alianza</div>
                     <div class="text-lg font-semibold text-accent">
@@ -133,18 +151,17 @@
                 </div>
 
                 {{-- FALTANTES --}}
-                @if(!empty($syncDiff['missing']))
+                @if (!empty($syncDiff['missing']))
                     <div class="mb-3">
                         <h4 class="text-sm font-semibold text-warning mb-2">
                             ⚠️ En Albion pero NO registrados ({{ count($syncDiff['missing']) }})
                         </h4>
                         <div class="space-y-1 max-h-48 overflow-y-auto">
-                            @foreach($syncDiff['missing'] as $g)
+                            @foreach ($syncDiff['missing'] as $g)
                                 <label class="flex items-center gap-2 p-2 bg-base-200/50 rounded cursor-pointer">
-                                    <input type="checkbox"
-                                           @checked(in_array($g['id'], $syncSelected))
-                                           wire:click="toggleSyncSelected('{{ $g['id'] }}')"
-                                           class="rounded text-primary">
+                                    <input type="checkbox" @checked(in_array($g['id'], $syncSelected))
+                                        wire:click="toggleSyncSelected('{{ $g['id'] }}')"
+                                        class="rounded text-primary">
                                     <span class="text-sm">{{ $g['name'] }}</span>
                                     <code class="text-xs text-content-light/50">{{ $g['id'] }}</code>
                                 </label>
@@ -158,13 +175,13 @@
                 @endif
 
                 {{-- HUÉRFANOS --}}
-                @if(!empty($syncDiff['orphan']))
+                @if (!empty($syncDiff['orphan']))
                     <div class="mb-3">
                         <h4 class="text-sm font-semibold text-error mb-2">
                             🚨 En tu DB pero NO en la alianza actual ({{ count($syncDiff['orphan']) }})
                         </h4>
                         <div class="space-y-1">
-                            @foreach($syncDiff['orphan'] as $g)
+                            @foreach ($syncDiff['orphan'] as $g)
                                 <div class="p-2 bg-error/10 rounded text-sm">
                                     <span class="text-error">{{ $g['guild_name'] }}</span>
                                     <span class="text-xs text-content-light/50 ml-2">{{ $g['tag'] }}</span>
@@ -180,9 +197,9 @@
         </x-slot>
         <x-slot name="footer">
             <x-secondary-button wire:click="$set('showSyncModal', false)">Cerrar</x-secondary-button>
-            @if(!empty($syncDiff['missing']))
-                <x-button class="ml-2" wire:click="importSelected"
-                          wire:loading.attr="disabled" wire:target="importSelected">
+            @if (!empty($syncDiff['missing']))
+                <x-button class="ml-2" wire:click="importSelected" wire:loading.attr="disabled"
+                    wire:target="importSelected">
                     <span wire:loading.remove wire:target="importSelected">
                         Importar {{ count($syncSelected) }} gremio(s)
                     </span>
@@ -200,68 +217,79 @@
             {{ $editingId ? 'Configurar gremio' : 'Añadir gremio aliado' }}
         </x-slot>
         <x-slot name="content">
-            <div class="space-y-3">
+            <div class="space-y-4">
                 <div>
                     <x-label value="ID del gremio en Albion *" />
                     <div class="flex gap-2 mt-1">
-                        <x-input type="text" wire:model="guild_id" class="flex-1"
-                                 :readonly="$editingId !== null" />
-                        @if(!$editingId)
-                            <x-secondary-button type="button" wire:click="lookupInAlbion"
-                                                wire:loading.attr="disabled" wire:target="lookupInAlbion">
+                        <x-input type="text" wire:model="guild_id" class="flex-1" :readonly="$editingId !== null" />
+                        @if (!$editingId)
+                            <x-secondary-button type="button" wire:click="lookupInAlbion" wire:loading.attr="disabled"
+                                wire:target="lookupInAlbion">
                                 <span wire:loading.remove wire:target="lookupInAlbion">🔍 Verificar</span>
                                 <span wire:loading wire:target="lookupInAlbion">Buscando…</span>
                             </x-secondary-button>
                         @endif
                     </div>
-                    @error('guild_id') <span class="text-error text-xs">{{ $message }}</span> @enderror
+                    @error('guild_id')
+                        <span class="text-error text-xs">{{ $message }}</span>
+                    @enderror
                 </div>
 
                 <div>
                     <x-label value="Nombre (auto-rellenado)" />
                     <x-input type="text" wire:model="guild_name" readonly class="mt-1 bg-base-200/50" />
-                    @error('guild_name') <span class="text-error text-xs">{{ $message }}</span> @enderror
+                    @error('guild_name')
+                        <span class="text-error text-xs">{{ $message }}</span>
+                    @enderror
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                        <x-label value="TAG (2-4 mayúsculas) *" />
-                        <div class="flex gap-2 mt-1">
-                            <x-input type="text" wire:model="tag" maxlength="4"
-                                     class="flex-1 font-mono uppercase" placeholder="ERR" />
-                            <x-secondary-button type="button" wire:click="detectRole"
-                                                wire:loading.attr="disabled" wire:target="detectRole">
-                                🔍
-                            </x-secondary-button>
-                        </div>
-                        @if($roleFound)
-                            <p class="text-xs text-success mt-1">
-                                ✅ Rol existente detectado (ID {{ $discord_role_id }}). Se reutilizará.
-                            </p>
-                        @elseif($discord_role_id)
-                            <p class="text-xs text-content-light/60 mt-1">
-                                Rol: {{ $discord_role_id }}
-                            </p>
-                        @else
-                            <p class="text-xs text-content-light/60 mt-1">
-                                No se detectó rol con ese nombre. Se creará al guardar.
-                            </p>
-                        @endif
-                        @error('tag') <span class="text-error text-xs">{{ $message }}</span> @enderror
+                        <x-label value="TAG del Gremio (2-4 mayúsculas) *" />
+                        <x-input type="text" wire:model="tag" maxlength="4"
+                            class="mt-1 w-full font-mono uppercase" placeholder="Ej: LH" />
+                        <p class="text-xs text-content-light/60 mt-1">Se usará como prefijo en el apodo.</p>
+                        @error('tag')
+                            <span class="text-error text-xs">{{ $message }}</span>
+                        @enderror
                     </div>
                     <div>
                         <x-label value="Color del rol *" />
                         <input type="color" wire:model="color"
-                               class="mt-1 w-full h-10 rounded border border-base-300 bg-base-200" />
-                        @error('color') <span class="text-error text-xs">{{ $message }}</span> @enderror
+                            class="mt-1 w-full h-10 rounded border border-base-300 bg-base-200" />
+                        <p class="text-xs text-content-light/60 mt-1">Solo aplica si se crea un rol nuevo.</p>
+                        @error('color')
+                            <span class="text-error text-xs">{{ $message }}</span>
+                        @enderror
                     </div>
+                </div>
+
+                <div>
+                    <x-label value="Rol en Discord *" />
+                    <select wire:model="discord_role_id"
+                        class="mt-1 w-full bg-base-200 border border-base-300 rounded px-3 py-2 text-content-light focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/30">
+                        <option value="">➕ Crear nuevo rol en Discord usando el TAG</option>
+                        @foreach ($availableRoles as $id => $name)
+                            <option value="{{ $id }}">🔗 Vincular rol existente: {{ $name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <p class="text-xs text-content-light/60 mt-1">
+                        Si el gremio ya tiene un rol en Discord (ej: <code>[LH]</code>), selecciónalo aquí.
+                        Si no existe, deja la primera opción y el bot lo creará.
+                    </p>
+                    @error('discord_role_id')
+                        <span class="text-error text-xs">{{ $message }}</span>
+                    @enderror
                 </div>
 
                 <div>
                     <x-label value="Notas internas (opcional)" />
                     <textarea wire:model="notes" rows="2"
-                              class="mt-1 w-full border rounded-md shadow-sm bg-base-200 text-content-light px-3 py-2"></textarea>
-                    @error('notes') <span class="text-error text-xs">{{ $message }}</span> @enderror
+                        class="mt-1 w-full border rounded-md shadow-sm bg-base-200 text-content-light px-3 py-2"></textarea>
+                    @error('notes')
+                        <span class="text-error text-xs">{{ $message }}</span>
+                    @enderror
                 </div>
 
                 <div class="bg-warning/10 border border-warning/30 rounded p-2 text-xs text-warning">
@@ -273,8 +301,7 @@
         </x-slot>
         <x-slot name="footer">
             <x-secondary-button wire:click="$set('showModal', false)">Cancelar</x-secondary-button>
-            <x-button class="ml-2" wire:click="save"
-                      wire:loading.attr="disabled" wire:target="save">
+            <x-button class="ml-2" wire:click="save" wire:loading.attr="disabled" wire:target="save">
                 <span wire:loading.remove wire:target="save">Guardar</span>
                 <span wire:loading wire:target="save">Guardando…</span>
             </x-button>

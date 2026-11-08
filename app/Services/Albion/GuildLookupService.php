@@ -20,16 +20,23 @@ class GuildLookupService
                 if (!$res->successful()) return null;
                 $data = $res->json();
 
+                // --- NUEVA VALIDACIÓN ---
+                // Si la API devuelve un JSON sin el Id o el Name, lo tratamos como no encontrado
+                if (empty($data) || !isset($data['Id']) || !isset($data['Name'])) {
+                    return null;
+                }
+
                 return [
-                    'id'           => $data['Id'] ?? null,
-                    'name'         => $data['Name'] ?? null,
+                    'id'           => $data['Id'],
+                    'name'         => $data['Name'],
                     'allianceId'   => $data['AllianceId'] ?? null,
                     'allianceName' => $data['AllianceName'] ?? null,
                     'memberCount'  => $data['MemberCount'] ?? null,
                 ];
             } catch (\Throwable $e) {
                 logger()->warning('GuildLookupService fallo', [
-                    'id' => $guildId, 'error' => $e->getMessage(),
+                    'id' => $guildId,
+                    'error' => $e->getMessage(),
                 ]);
                 return null;
             }
