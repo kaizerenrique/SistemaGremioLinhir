@@ -560,14 +560,5 @@ class IdentityController extends Controller
             default  => "El personaje {$character->Name} no es integrante actual del gremio Linhir.",
         };
     }
-
-    private function rejected(string $reason): JsonResponse
-    {
-        return response()->json([
-            'success'  => false,
-            'decision' => 'rejected',
-            'reason'   => $reason,
-        ], 200);
-    }
     
 }
