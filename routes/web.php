@@ -107,6 +107,12 @@ Route::middleware([
             ->name('aliados.index');
     });
 
+    // Lista Negra
+    Route::middleware('can:manage_alliances')->group(function () {
+        Route::get('/admin/blacklist', fn() => view('paginas.blacklist-index'))
+            ->name('blacklist.index');
+    });
+
     // -----------------------------------------------
     // CTAs
     // -----------------------------------------------

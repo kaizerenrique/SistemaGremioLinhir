@@ -181,6 +181,9 @@
                                         <x-dropdown-link href="{{ route('aliados.index') }}">
                                             Aliados HRL
                                         </x-dropdown-link>
+                                        <x-dropdown-link href="{{ route('blacklist.index') }}">
+                                            Lista Negra
+                                        </x-dropdown-link>
                                     @endcan
 
                                     @can('Ver Usuarios')
