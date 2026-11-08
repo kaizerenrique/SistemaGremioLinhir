@@ -100,6 +100,14 @@ Route::middleware([
     });
 
     // -----------------------------------------------
+    // Aliados HRL
+    // -----------------------------------------------
+    Route::middleware('can:manage_alliances')->group(function () {
+        Route::get('/admin/aliados', fn() => view('paginas.aliados-index'))
+            ->name('aliados.index');
+    });
+
+    // -----------------------------------------------
     // CTAs
     // -----------------------------------------------
     // ⚠️ IMPORTANTE: ctas.create DEBE ir antes de ctas.show
@@ -149,4 +157,6 @@ Route::middleware([
         Route::get('/admin/dashboard', fn() => view('paginas.admin-dashboard'))
             ->name('admin.dashboard');
     });
+
+    
 });

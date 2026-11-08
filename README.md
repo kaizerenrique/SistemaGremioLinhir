@@ -6,11 +6,12 @@
 
 # ⚔️ Linhir - Sistema de Gestión para Gremios de Albion Online
 
-**Linhir** es una plataforma web integral desarrollada para optimizar la gestión y la comunidad del gremio del mismo nombre en *Albion Online* (Servidor West, ciudad de Fort Sterling). El sistema integra sincronización con la API oficial del juego, autenticación moderna, estadísticas en tiempo real, ranking de competencias semanales y herramientas administrativas avanzadas.
+**Linhir** es una plataforma web integral desarrollada para optimizar la gestión y la comunidad del gremio del mismo nombre en *Albion Online* (Servidor West, ciudad de Fort Sterling). El sistema integra sincronización en tiempo real con la API oficial del juego, análisis profundo de batallas, gestión financiera, autenticación con Discord y herramientas administrativas avanzadas para los oficiales del gremio.
 
 [![Laravel Version](https://img.shields.io/badge/Laravel-12.x-red.svg)](https://laravel.com)
 [![Livewire Version](https://img.shields.io/badge/Livewire-3.x-4e56a6.svg)](https://livewire.laravel.com)
 [![PHP Version](https://img.shields.io/badge/PHP-^8.2-777bb4.svg)](https://php.net)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.x-38bdf8.svg)](https://tailwindcss.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
@@ -18,8 +19,9 @@
 ## 📋 Tabla de Contenidos
 
 - [Características Principales](#-características-principales)
+- [Inteligencia y Análisis Bélico](#-inteligencia-y-análisis-bélico)
+- [Módulos de Gestión](#-módulos-de-gestión)
 - [Tecnologías Utilizadas](#-tecnologías-utilizadas)
-- [Módulos y Funcionalidades](#-módulos-y-funcionalidades)
 - [Comandos Programados](#-comandos-programados)
 - [Estructura del Proyecto](#-estructura-del-proyecto)
 - [Autores](#-autores)
@@ -28,18 +30,51 @@
 
 ## 🚀 Características Principales
 
-*   **🔐 Autenticación Multi-Vía**: Inicio de sesión tradicional (email/contraseña) o mediante **Discord OAuth2** (Socialite), con generación y envío automático de contraseña por correo para nuevos usuarios.
-*   **👥 Gestión de Usuarios y Roles**: Sistema robusto de permisos (Spatie) que permite controlar el acceso a módulos administrativos como "Usuarios", "Roles" y "Miembros".
-*   **🔄 Sincronización Automática con Albion Online**: Consume la API pública (`gameinfo.albiononline.com`) para mantener actualizados los datos de personajes, gremios, estadísticas de por vida (PVE, PVP, Crafteo) y estadísticas de recolección (Fiber, Hide, Ore, Rock, Wood).
-*   **🏆 Ranking Semanal de Especialidades**: Calcula la **fama ganada en la semana actual** para cada especialidad (Peletero, Minero, Cosechador, Leñador, Cantero, Pescador, Crafter y Agricultor). Fomenta la competencia sana al mostrar al líder de la semana en la página principal.
-*   **📊 Top de Fama Semanal**: Muestra el Top 3 de jugadores con mayor ganancia de fama PvE y PvP durante la semana.
-*   **🖥️ Monitorización del Servidor**: Verifica el estado del servidor de Albion cada 15 segundos (en horario específico) y envía notificaciones automáticas a Discord cuando hay cambios (Online/Offline).
-*   **💰 Economía en Tiempo Real**: Consulta y almacena el precio del Oro en el mercado, visible en el panel de usuario.
-*   **🎂 Sistema de Cumpleaños**: Registra fechas de cumpleaños de los miembros y envía un mensaje automático con webhook a Discord el día indicado.
-*   **🏦 Módulo Bancario**: Lleva un registro de ingresos y egresos de los personajes, con filtros y saldo actualizado.
-*   **🧮 Calculadora de Cultivos**: Herramienta para jugadores que calcula el retorno de inversión (profit) de cultivos según premium, foco, bonificaciones y precios de mercado.
-*   **📝 Blog Integrado con Blogger**: Publica noticias, guías y novedades usando la plataforma Blogger (Google). Los artículos se muestran en la web de Linhir con el mismo diseño y paleta de colores, manteniendo la independencia del sistema principal. El contenido se cachea para un rendimiento óptimo.
-*   **🔔 Notificaciones Automáticas a Discord**: Un comando programado detecta automáticamente cuando se publica un nuevo artículo en el blog y envía una notificación con embed al canal de Discord del gremio, informando a la comunidad al instante.
+*   **🔐 Autenticación Multi-Vía**: Inicio de sesión tradicional (email/contraseña) o mediante **Discord OAuth2** (Socialite).
+*   **🤖 Integración Total con Discord**: Envío de reportes de batalla, gestión de roles automáticos (Oficial/Miembro), notificaciones de blog, estado del servidor y alertas de cumpleaños a través de Webhooks y la API del Bot.
+*   **🔄 Sincronización Automática (Albion API)**: Consumo de la API de `gameinfo.albiononline.com` para actualizar miembros, batallas, precio del oro, y estadísticas de por vida (PVE, PVP, Recolección, Crafteo).
+*   **🏆 Sistema de Puntos y Tareas**: Los oficiales pueden crear tareas. Los usuarios las completan, envían evidencias y los oficiales las aprueban. Todo se refleja en un ranking de puntos.
+*   **🎯 Gestión de CTAs (Call to Action)**: Creación de actividades desde la web o el bot, asignación de armas específicas por composición (con soporte para emojis de Discord), y publicación automática con botones interactivos en Discord.
+*   **🏦 Módulo Bancario**: Lleva el control del ledger del gremio (ingresos/egresos), el saldo personal de cada miembro y gestiona las solicitudes de retiro de los mismos.
+
+---
+
+## 🛡️ Inteligencia y Análisis Bélico (War Room)
+
+El sistema cuenta con un ecosistema avanzado para analizar el rendimiento en PvP:
+
+1.  **Listado de Batallas y Detalle**: Análisis de kills, daño, curación y desglose por gremio/alianza.
+2.  **Equipamiento Perdido (Gear Loss Tracker)**: Extrae de los `KillEvents` qué ítems exactos perdió cada miembro de Linhir en una batalla, agrupándolos con sus íconos y cantidades (Tier y Encantamiento).
+3.  **Reporte Multi-Batalla (Campañas)**: Selección manual de múltiples reportes para concatenarlos. Deduplica jugadores (por su `player_id`), sumando sus kills y muertes a lo largo de varios días o sesiones, calculando bajas-únicas vs muertes-evento.
+4.  **Análisis de Guerra H2H (Head-to-Head)**: Panel para seleccionar un rango de fechas y un gremio enemigo. Cruza los `KillEvents` para determinar:
+    *   Kills de Linhir vs Kills del Enemigo.
+    *   Avg IP en el intercambio.
+    *   Top Asesinos de ambos lados.
+    *   "Piñatas" (miembros de Linhir que más mueren) y las víctimas favoritas del enemigo.
+5.  **Envío a Discord**: Cualquier reporte multi-batalla o análisis puede ser enviado automáticamente como un *Embed* formateado a un canal de Discord.
+
+---
+
+## 🧩 Módulos de Gestión
+
+### 📊 Dashboard Administrativo (`/admin/dashboard`)
+Panel central para oficiales con KPIs en tiempo real:
+*   Precio del oro, Banco Gremial, y K/D semanal del gremio.
+*   Total de integrantes, porcentaje de vinculación Web/Discord y último miembro en ingresar.
+*   Top Recolector de la semana (basado en `EspecialidadSemanal`).
+*   Accesos rápidos a Próximas CTAs, Reportes de Tareas pendientes y Solicitudes de Retiro.
+
+### 💼 Módulo de Administración y Comunidad
+*   **Linhir (Miembros)**: Tabla completa de miembros, fama, saldo, vinculación, y edición de cumpleaños.
+*   **Usuarios y Roles**: CRUD completo con sistema de permisos (Spatie).
+*   **Discord Server**: Visualización de miembros del servidor, roles y vinculación con la web.
+*   **Gestión de Tareas**: Crear, editar y desactivar tareas de la comunidad.
+
+### 📝 Blog Integrado
+*   Integración con la API de Google Blogger. Los artículos se renderizan en la web con la paleta de colores de Linhir y caché inteligente para optimizar el rendimiento.
+
+### 🧮 Calculadora de Cultivos
+*   Herramienta interactiva para calcular el retorno de inversión (profit) de cultivos según premium, foco, bonificaciones de ciudad y precios de mercado.
 
 ---
 
@@ -48,83 +83,46 @@
 *   **Backend**: PHP 8.2, Laravel 12.
 *   **Frontend Dinámico**: Livewire 3 (componentes reactivos sin JavaScript complejo).
 *   **Autenticación**: Laravel Jetstream + Fortify + Socialite (Discord).
-*   **Base de Datos**: MySQL / MariaDB (con soporte para SQLite en entornos de prueba).
-*   **Estilos**: Tailwind CSS 3 (con paleta de colores personalizada para el gremio).
+*   **Base de Datos**: MySQL / MariaDB (con soporte para SQLite en testing).
+*   **Estilos**: Tailwind CSS 3.
 *   **Permisos**: Spatie Laravel-Permission.
-*   **HTTP Client**: GuzzleHttp para consumir APIs externas.
-*   **Mapa del Sitio**: Spatie Laravel-Sitemap.
-*   **Inteligencia Artificial**: Integración opcional con Ollama (LLaMA3) para asistente interno.
-*   **Blog**: API de Blogger v3 (Google) con caché local.
-
----
-
-## 🧩 Módulos y Funcionalidades
-
-### 1. Landing Page (Pública)
-*   **Hero** con llamado a la acción principal.
-*   **Ranking de Especialidades Semanal**: Visualización de los líderes de cada oficio con la fama ganada en la semana.
-*   **Top 3 Fama PvE y PvP**.
-*   **Sección "Nosotros"** con historia del gremio, hitos y video destacado.
-*   **Reproductor de Música** (Spotify embed) con el álbum oficial del gremio.
-*   **Proceso de Reclutamiento** con requisitos y pasos a seguir.
-
-### 2. Panel de Usuario (Dashboard)
-*   Visualización del precio del Oro en tiempo real.
-*   Listado y gestión de personajes vinculados a la cuenta.
-*   Desvinculación de personajes.
-*   Indicadores de membresía en Discord y en el gremio.
-
-### 3. Módulo de Administración
-*   **Linhir (Miembros)**: Tabla completa con todos los integrantes del gremio, mostrando su fama, saldo bancario, vinculación a Discord/Web y edición de cumpleaños.
-*   **Usuarios**: CRUD completo de usuarios de la plataforma, asignación de roles y permisos.
-*   **Roles y Permisos**: Visor de roles existentes y sus permisos asociados.
-
-### 4. Registro de Personaje
-*   Buscador de personajes por nombre (vía API).
-*   Vinculación segura del personaje al usuario autenticado, verificando si ya está registrado por otro usuario.
-
-### 5. Calculadora de Cultivos
-*   Herramienta útil para jugadores que calcula el retorno de inversión (profit) de cultivos según premium, foco, bonificaciones y precio de mercado de semillas y productos.
-
-### 6. Blog (Integración con Blogger)
-*   **Publicación desde Blogger**: Administra el contenido desde el panel de Blogger, aprovechando su editor y gestión de imágenes.
-*   **Visualización en la Web**: Los artículos se muestran en `/blog` con un diseño responsive, listado con paginación "Cargar más" y detalle completo.
-*   **Caché Inteligente**: Las llamadas a la API de Blogger se cachean para reducir la latencia y el consumo de cuota de la API.
-*   **SEO Dinámico**: Cada artículo genera metaetiquetas Open Graph y Twitter Cards automáticamente a partir del título, descripción e imagen destacada.
-*   **Sitemap Automático**: Las URLs del blog se incluyen en el sitemap semanal para mejorar el posicionamiento en buscadores.
+*   **HTTP Client**: GuzzleHttp para consumir APIs externas (Albion, Discord).
+*   **Colas (Queues)**: Procesamiento asíncrono para batallas (`ProcessBattle`) y recordatorios de CTAs.
+*   **IA (Opcional)**: Integración con Ollama (LLaMA3) para asistente interno.
 
 ---
 
 ## ⏱️ Comandos Programados
 
-El sistema utiliza el programador de tareas de Laravel (Cron) para mantener los datos actualizados automáticamente. A continuación se detallan los comandos principales:
+El sistema utiliza el programador de tareas de Laravel (`routes/console.php`):
 
 | Comando | Frecuencia | Descripción |
 | :--- | :--- | :--- |
-| `app:integrantes-de-linhir` | Cada hora | Sincroniza la lista de miembros del gremio y sus estadísticas de por vida (PVE, PVP, Crafteo, Recolección). |
-| `app:update-especialidades-semanales` | Cada hora | Calcula la ganancia semanal de cada especialidad para todos los miembros activos. |
-| `app:fama_update` | Cada hora (Refuerzos Lunes/Domingo) | Actualiza la fama PvE y PvP semanal. |
-| `app:update-gold-price` | Cada hora | Consulta la API externa y guarda el precio actual del Oro. |
-| `app:server_check` | Cada 15 segundos (Rango horario) | Verifica el estado del servidor y dispara alertas en Discord. |
-| `discord:birthday-notification` | Diario (10:00 AM) | Envía un mensaje de felicitación por cumpleaños al canal de Discord. |
-| `sitemap:generate` | Semanal | Genera el archivo `sitemap.xml` para SEO. |
-| `blog:check-new-posts` | Cada 30 minutos | Verifica si hay nuevos posts en Blogger y envía notificación a Discord. |
+| `app:integrantes-de-linhir` | Cada hora | Sincroniza miembros y estadísticas de por vida (PVE, PVP, etc.). |
+| `app:sync-battles` | Cada 30 min | Busca y encola nuevas batallas para procesarlas. |
+| `app:update-especialidades-semanales` | Cada hora | Calcula la ganancia semanal de fama por especialidad. |
+| `app:fama_update` | Cada hora | Actualiza la fama PvE y PvP semanal. |
+| `app:update-gold-price` | Cada hora | Guarda el precio actual del Oro. |
+| `app:server_check` | 15 segs (Rango) | Monitorea el estado del servidor y alerta a Discord. |
+| `ctas:send-reminders` | Cada minuto | Envía DMs en Discord a los inscritos a CTAs próximas. |
+| `discord:birthday-notification` | Diario | Felicita a los miembros en Discord por su cumpleaños. |
+| `blog:check-new-posts` | Cada 30 min | Notifica a Discord sobre nuevos artículos en el blog. |
+| `sitemap:generate` | Semanal | Genera el `sitemap.xml` para SEO. |
 
 ---
 
 ## 📁 Estructura del Proyecto
 
-A continuación se resumen las carpetas más relevantes del proyecto:
-
-*   `app/Console/Commands/`: Contiene todos los comandos Artisan personalizados.
-*   `app/Livewire/`: Componentes Livewire organizados en módulos (Componentes públicos, Módulos funcionales).
-*   `app/Models/`: Modelos Eloquent que representan las tablas de la base de datos.
-*   `app/Traits/`: Traits reutilizables para consumir APIs (Albion, AlbionEconomia, Discord, etc.).
-*   `database/migrations/`: Migraciones que definen el esquema de la base de datos.
-*   `resources/views/`: Vistas Blade (layout, componentes, páginas públicas y privadas).
-*   `routes/`: Definición de rutas web, API y consola.
-
-El proyecto sigue el estándar de Laravel, con una clara separación de responsabilidades y un enfoque en la reutilización de código.
+*   `app/Console/Commands/`: Comandos Artisan para sincronización y automatización.
+*   `app/Jobs/`: Procesamiento en cola (ej. `ProcessBattle` para extraer equipamiento y kills).
+*   `app/Livewire/`: Componentes reactivos.
+    *   `Modulo/Battles/`: Batallas, Multi-Batalla, Análisis de Guerra.
+    *   `Modulo/Admin/`: Dashboards y gestión de Discord/Usuarios.
+    *   `Modulo/Banco/`: Cuentas y retiros.
+    *   `Modulo/Ctas/`: Composiciones, creación y gestión de actividades.
+*   `app/Models/`: Modelos Eloquent (Battle, KillEvent, Personaje, Cta, etc.).
+*   `app/Services/`: Lógica de negocio (Discord, GuildBank, Tasks, CtaEmbedBuilder).
+*   `app/Traits/`: Integraciones con APIs (Albion, Discord).
 
 ---
 

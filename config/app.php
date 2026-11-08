@@ -138,5 +138,7 @@ return [
     'guild_tax_rate'      => env('GUILD_TAX_RATE', 10),
     'management_tax_rate' => env('MANAGEMENT_TAX_RATE', 5),
     'cta_announce_channel_id' => env('CTA_ANNOUNCE_CHANNEL_ID'),
+    'hrl_alliance_id' => env('HRL_ALLIANCE_ID'),  // ← nuevo
+    'hrl_role_id'     => env('HRL_ROLE_ID'),
 
 ];

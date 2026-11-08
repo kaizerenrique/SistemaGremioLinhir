@@ -177,9 +177,15 @@
                                             href="{{ route('discord.index') }}">{{ __('Discord server') }}</x-dropdown-link>
                                     @endcan
 
+                                    @can('manage_alliances')
+                                        <x-dropdown-link href="{{ route('aliados.index') }}">
+                                            Aliados HRL
+                                        </x-dropdown-link>
+                                    @endcan
+
                                     @can('Ver Usuarios')
                                         <x-dropdown-link href="{{ route('admin.dashboard') }}">
-                                            📊 Dashboard Overview
+                                            Dashboard Overview
                                         </x-dropdown-link>
                                     @endcan
                                 </div>
@@ -458,7 +464,13 @@
 
                             @can('Ver Usuarios')
                                 <x-responsive-nav-link href="{{ route('admin.dashboard') }}" :active="request()->routeIs('admin.dashboard')">
-                                    📊 Dashboard Overview
+                                    Dashboard Overview
+                                </x-responsive-nav-link>
+                            @endcan
+
+                            @can('manage_alliances')
+                                <x-responsive-nav-link href="{{ route('aliados.index') }}" :active="request()->routeIs('aliados.*')">
+                                    Aliados HRL
                                 </x-responsive-nav-link>
                             @endcan
                         </div>

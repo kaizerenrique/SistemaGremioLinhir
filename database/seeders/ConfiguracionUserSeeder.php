@@ -84,6 +84,9 @@ class ConfiguracionUserSeeder extends Seeder
             // --- Cuenta Gremial ---
             'Ver Cuenta Gremial',
             'Gestionar Cuenta Gremial',
+            
+            // --- Alianza ---
+            'manage_alliances',
         ];
 
         foreach ($permissions as $permName) {
@@ -119,6 +122,7 @@ class ConfiguracionUserSeeder extends Seeder
                 'Gestionar Actividades',
                 'Ver Cuenta Gremial', 
                 'Gestionar Cuenta Gremial',
+                'manage_alliances',
             ],
 
             'Sub-Oficial' => [
