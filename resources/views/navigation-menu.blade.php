@@ -51,6 +51,9 @@
                                         <x-dropdown-link href="{{ route('linhir') }}">{{ __('Miembros') }}</x-dropdown-link>
                                         <x-dropdown-link
                                             href="{{ route('ranking') }}">{{ __('Ranking de puntos') }}</x-dropdown-link>
+                                        <x-dropdown-link href="{{ route('cumpleanos.index') }}">
+                                            {{ __('Calendario de cumpleaños') }}
+                                        </x-dropdown-link>
                                     @endcan
                                     @can('Ver CTAs')
                                         <x-dropdown-link

@@ -164,5 +164,11 @@ Route::middleware([
             ->name('admin.dashboard');
     });
 
+    // Calendario de cumpleaños
+    Route::middleware('can:Ver Linhir')->group(function () {
+        Route::get('/cumpleanos', fn() => view('paginas.cumpleanos'))
+            ->name('cumpleanos.index');
+    });
+
     
 });
