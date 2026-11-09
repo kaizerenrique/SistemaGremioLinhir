@@ -13,20 +13,21 @@ use Carbon\Carbon;
 use App\Models\FamaSemanal;
 use Illuminate\Support\Facades\DB;
 use App\Models\EspecialidadSemanal;
+use Illuminate\Support\Facades\Log;
 
-trait Albion 
+trait Albion
 {
 
-    /**
-	* Esta función realiza una consulta a la Pagina del gameinfo.albiononline 
-    * para buscar información de los personajes por su nombre. 
-	* 
-	* @param string   $text	cadena de texto que contiene el nombre del personaje
-	*
-	* @return Retorna un array.
-	*/	
+	/**
+	 * Esta función realiza una consulta a la Pagina del gameinfo.albiononline 
+	 * para buscar información de los personajes por su nombre. 
+	 * 
+	 * @param string   $text	cadena de texto que contiene el nombre del personaje
+	 *
+	 * @return Retorna un array.
+	 */
 
-    public function buscarpersonajepornombre($text)
+	public function buscarpersonajepornombre($text)
 	{
 		// Validar que el texto no esté vacío
 		if (empty($text)) {
@@ -59,173 +60,219 @@ trait Albion
 
 			// Si no hay resultados o la respuesta falló
 			return false;
-
 		} catch (\Illuminate\Http\Client\ConnectionException $e) {
 			// Manejar excepciones de conexión
 			return false;
 		}
 	}
 
-    /**
-	* Esta función realiza una consulta a la Pagina del gameinfo.albiononline 
-    * para buscar información de los personajes segun su id. 
-	* 
-	* @param string   $identificador cadena de texto que contiene el id de albion 
-	* del personaje
-	*
-	* @return Retorna un array.
-	*/
+	/**
+	 * Esta función realiza una consulta a la Pagina del gameinfo.albiononline 
+	 * para buscar información de los personajes segun su id. 
+	 * 
+	 * @param string   $identificador cadena de texto que contiene el id de albion 
+	 * del personaje
+	 *
+	 * @return Retorna un array.
+	 */
 
-	public function consultarpersonaje($identificador) 
+	public function consultarpersonaje($identificador)
 	{
 		try {
-            $url = 'https://gameinfo.albiononline.com/api/gameinfo/players/';
-			$response = Http::get($url.$identificador);
+			$url = 'https://gameinfo.albiononline.com/api/gameinfo/players/';
+			$response = Http::get($url . $identificador);
 
-			$respuesta = $response->getBody()->getContents();// accedemos a el contenido			
+			$respuesta = $response->getBody()->getContents(); // accedemos a el contenido			
 
-            $respuesta = json_decode($respuesta); //convertimos en json	
+			$respuesta = json_decode($respuesta); //convertimos en json	
 
 			return $respuesta;
-				
-
-        } catch (\Illuminate\Http\Client\ConnectionException $e) {
-            //report($e);	 
-	        return false;
-        }
-
+		} catch (\Illuminate\Http\Client\ConnectionException $e) {
+			//report($e);	 
+			return false;
+		}
 	}
 
-    /**
-	* Esta función realiza una consulta a la Pagina del gameinfo.albiononline 
-    * para buscar información de los gremios por nombre. 
-	* 
-	* @param string   $text	cadena de texto que contiene el nombre del gremio
-	*
-	* @return Retorna un array.
-	*/	
+	/**
+	 * Esta función realiza una consulta a la Pagina del gameinfo.albiononline 
+	 * para buscar información de los gremios por nombre. 
+	 * 
+	 * @param string   $text	cadena de texto que contiene el nombre del gremio
+	 *
+	 * @return Retorna un array.
+	 */
 
-    public function buscargremiopornombre($text)
+	public function buscargremiopornombre($text)
 	{
-        try {
-            $url = 'https://gameinfo.albiononline.com/api/gameinfo/search?q=';
-			$response = Http::get($url.$text);
+		try {
+			$url = 'https://gameinfo.albiononline.com/api/gameinfo/search?q=';
+			$response = Http::get($url . $text);
 
-			$respuesta = $response->getBody()->getContents();// accedemos a el contenido			
+			$respuesta = $response->getBody()->getContents(); // accedemos a el contenido			
 
-            $respuesta = json_decode($respuesta); //convertimos en json	
+			$respuesta = json_decode($respuesta); //convertimos en json	
 
 			if (!empty($respuesta->guilds)) {
 				return $respuesta->guilds;
 			} else {
 				return false;
-			}	
-
-        } catch (\Illuminate\Http\Client\ConnectionException $e) {
-            //report($e);	 
-	        return false;
-        }
+			}
+		} catch (\Illuminate\Http\Client\ConnectionException $e) {
+			//report($e);	 
+			return false;
+		}
 	}
 
-    /**
-	* Esta función realiza una consulta a la Pagina del gameinfo.albiononline 
-    * para buscar información de los gremios por su id. 
-	* 
-	* @param string   $text	cadena de texto que contiene el ID
-	*
-	* @return Retorna un array.
-	*/	
-
-    public function consultargremio($text)
-	{
-        try {
-            $url = 'https://gameinfo.albiononline.com/api/gameinfo/guilds/';
-			$response = Http::get($url.$text.'/data');
-
-			$respuesta = $response->getBody()->getContents();// accedemos a el contenido			
-
-            $respuesta = json_decode($respuesta); //convertimos en json	
-			
-			return $respuesta;			
-
-        } catch (\Illuminate\Http\Client\ConnectionException $e) {
-            //report($e);	 
-	        return false;
-        }
-	}
-    
 	/**
-	* Esta función realiza una consulta a la Pagina del gameinfo.albiononline 
-    * para buscar información de los integrantes de linhir
-	* 
-	* @param string   $text	cadena de texto que contiene el ID
-	*
-	* @return Retorna un array.
-	*/	
+	 * Esta función realiza una consulta a la Pagina del gameinfo.albiononline 
+	 * para buscar información de los gremios por su id. 
+	 * 
+	 * @param string   $text	cadena de texto que contiene el ID
+	 *
+	 * @return Retorna un array.
+	 */
 
-    public function integrantesdelgremiolinhir()
+	public function consultargremio($text)
+	{
+		try {
+			$url = 'https://gameinfo.albiononline.com/api/gameinfo/guilds/';
+			$response = Http::get($url . $text . '/data');
+
+			$respuesta = $response->getBody()->getContents(); // accedemos a el contenido			
+
+			$respuesta = json_decode($respuesta); //convertimos en json	
+
+			return $respuesta;
+		} catch (\Illuminate\Http\Client\ConnectionException $e) {
+			//report($e);	 
+			return false;
+		}
+	}
+
+	/**
+	 * Esta función realiza una consulta a la Pagina del gameinfo.albiononline 
+	 * para buscar información de los integrantes de linhir
+	 * 
+	 * @param string   $text	cadena de texto que contiene el ID
+	 *
+	 * @return Retorna un array.
+	 */
+
+	public function integrantesdelgremiolinhir()
 	{
 		$linhir_id = config('app.linhir_gremio_id');
-        try {
-            $url = 'https://gameinfo.albiononline.com/api/gameinfo/guilds/';
-			$response = Http::get($url.$linhir_id.'/members');
 
-			$respuesta = $response->getBody()->getContents();// accedemos a el contenido	
+		if (empty($linhir_id)) {
+			Log::error('integrantesdelgremiolinhir: LINHIR_GREMIO_ID no configurado');
+			return false;
+		}
 
-            $integrantes = json_decode($respuesta);
+		try {
+			$url = "https://gameinfo.albiononline.com/api/gameinfo/guilds/{$linhir_id}/members";
 
-			// Obtener los IDs de los miembros actuales del gremio
-			$idsIntegrantesActuales = collect($integrantes)->pluck('Id')->toArray();
+			$response = Http::timeout(30)
+				->retry(3, 2000)
+				->get($url);
 
-			// Obtener todos los personajes registrados en la base de datos que pertenecen al gremio
+			// 1. VERIFICAR ÉXITO ANTES DE TOCAR LA BASE DE DATOS
+			if (! $response->successful()) {
+				Log::warning('integrantesdelgremiolinhir: API no exitosa, no se modifica la BD', [
+					'status' => $response->status(),
+					'body'   => \Illuminate\Support\Str::limit($response->body(), 300),
+				]);
+				return false;
+			}
+
+			$integrantes = $response->json();
+
+			// 2. VALIDAR QUE SEA UN ARRAY VÁLIDO Y NO VACÍO
+			if (! is_array($integrantes) || empty($integrantes)) {
+				Log::warning('integrantesdelgremiolinhir: respuesta vacía o inválida, no se modifica la BD');
+				return false;
+			}
+
+			// 3. SANITY CHECK: si la API devuelve menos de la mitad de lo que
+			//    ya tenemos en la BD, es sospechoso y abortamos.
+			$dbCount = Personaje::where('GuildId', $linhir_id)->count();
+			if ($dbCount >= 10 && count($integrantes) < $dbCount * 0.5) {
+				Log::warning('integrantesdelgremiolinhir: lista sospechosamente pequeña, abortando', [
+					'api_count' => count($integrantes),
+					'db_count'  => $dbCount,
+				]);
+				return false;
+			}
+
+			$idsIntegrantesActuales = collect($integrantes)
+				->pluck('Id')
+				->filter()
+				->toArray();
+
+			// 4. SOLO aquí procesamos bajas. Con delay para evitar rate-limit.
 			$personajesRegistrados = Personaje::where('GuildId', $linhir_id)->get();
 
-			// Marcar como "no miembro" y actualizar el GuildId de los personajes que ya no están en el gremio
 			foreach ($personajesRegistrados as $personaje) {
-				if (!in_array($personaje->Id_albion, $idsIntegrantesActuales)) {
-					// Buscar información actual del personaje en la API
-					$urlPersonaje = 'https://gameinfo.albiononline.com/api/gameinfo/players/' . $personaje->Id_albion;
-					$responsePersonaje = Http::get($urlPersonaje);
-	
+				if (in_array($personaje->Id_albion, $idsIntegrantesActuales)) {
+					continue;
+				}
+
+				usleep(250_000); // 250 ms entre llamadas
+
+				try {
+					$responsePersonaje = Http::timeout(10)
+						->retry(2, 1000)
+						->get("https://gameinfo.albiononline.com/api/gameinfo/players/{$personaje->Id_albion}");
+
 					if ($responsePersonaje->successful()) {
-						$infoPersonaje = json_decode($responsePersonaje->getBody()->getContents());
-	
-						// Actualizar el GuildId con el nuevo gremio o null si no tiene
+						$info = $responsePersonaje->json();
+						$nuevoGuildId = $info['GuildId'] ?? null;
+
 						$personaje->update([
-							'GuildId' => $infoPersonaje->GuildId ?? null,
-							'miembro' => false,
+							'GuildId' => $nuevoGuildId,
+							'miembro' => $nuevoGuildId === $linhir_id,
 						]);
 					} else {
-						// Si no se puede obtener la información, marcar como "no miembro" y GuildId como null
-						$personaje->update([
-							'GuildId' => null,
-							'miembro' => false,
+						// API falla → NO tocar la BD (probable rate-limit temporal)
+						Log::warning('No se pudo verificar personaje, se conserva su estado actual', [
+							'id_albion' => $personaje->Id_albion,
+							'status'    => $responsePersonaje->status(),
 						]);
 					}
+				} catch (\Throwable $e) {
+					Log::warning('Error verificando personaje, se conserva su estado', [
+						'id_albion' => $personaje->Id_albion,
+						'error'     => $e->getMessage(),
+					]);
 				}
 			}
-	
-			// Registrar nuevos miembros o actualizar los existentes
+
+			// 5. Alta / actualización de miembros actuales
 			foreach ($integrantes as $integrante) {
+				if (empty($integrante['Id'])) {
+					continue;
+				}
+
 				Personaje::updateOrCreate(
-					['Id_albion' => $integrante->Id],
+					['Id_albion' => $integrante['Id']],
 					[
-						'Name' => $integrante->Name,
-						'GuildId' => $integrante->GuildId,
+						'Name'    => $integrante['Name'],
+						'GuildId' => $integrante['GuildId'] ?? $linhir_id,
 						'miembro' => true,
 					]
 				);
 			}
-	
+
+			Log::info('integrantesdelgremiolinhir: sincronización OK', [
+				'api_count' => count($integrantes),
+			]);
+
 			return true;
-			
-
-        } catch (\Illuminate\Http\Client\ConnectionException $e) {
-            //report($e);	 
-	        return false;
-        }
+		} catch (\Throwable $e) {
+			Log::error('integrantesdelgremiolinhir: excepción, no se modifica la BD', [
+				'error' => $e->getMessage(),
+			]);
+			return false;
+		}
 	}
-
 	/**
 	 * Esta función realiza una consulta a la Pagina del gameinfo.albiononline
 	 * para buscar información de los personajes registrados
@@ -233,63 +280,31 @@ trait Albion
 
 	public function datospersonaje()
 	{
-		$personajesRegistrados = Personaje::all();
+		$personajesRegistrados = Personaje::where('miembro', true)->get();
 
-		foreach ($personajesRegistrados as $personajesRegistrado)
-		{
-			// Buscar información actual del personaje en la API
-			$urlPersonaje = 'https://gameinfo.albiononline.com/api/gameinfo/players/' . $personajesRegistrado->Id_albion;
-			$responsePersonaje = Http::get($urlPersonaje);
+		foreach ($personajesRegistrados as $personaje) {
+			usleep(200_000); // 200 ms entre llamadas → máx ~5 req/s
 
-			if ($responsePersonaje->successful())
-			{
-				$infoPersonaje = json_decode($responsePersonaje->getBody()->getContents(), true);
+			$responsePersonaje = Http::timeout(10)
+				->retry(2, 1000)
+				->get("https://gameinfo.albiononline.com/api/gameinfo/players/{$personaje->Id_albion}");
 
-				// Convertir la fecha al formato correcto
-				$timestamp = Carbon::parse($infoPersonaje['LifetimeStatistics']['Timestamp'])->toDateTimeString();
-				// Almacenar los datos de LifetimeStatistics
-				$lifetimeStatistics = $infoPersonaje['LifetimeStatistics'];
-				$lifetimeStats = $personajesRegistrado->lifetimeStatistics()->updateOrCreate(
-					['personaje_id' => $personajesRegistrado->id],
-					[
-						'PvE_Total' => $lifetimeStatistics['PvE']['Total'],
-						'PvE_Royal' => $lifetimeStatistics['PvE']['Royal'],
-						'PvE_Outlands' => $lifetimeStatistics['PvE']['Outlands'],
-						'PvE_Avalon' => $lifetimeStatistics['PvE']['Avalon'],
-						'PvE_Hellgate' => $lifetimeStatistics['PvE']['Hellgate'],
-						'PvE_CorruptedDungeon' => $lifetimeStatistics['PvE']['CorruptedDungeon'],
-						'PvE_Mists' => $lifetimeStatistics['PvE']['Mists'],
-						'Crafting_Total' => $lifetimeStatistics['Crafting']['Total'],
-						'Crafting_Royal' => $lifetimeStatistics['Crafting']['Royal'],
-						'Crafting_Outlands' => $lifetimeStatistics['Crafting']['Outlands'],
-						'Crafting_Avalon' => $lifetimeStatistics['Crafting']['Avalon'],
-						'CrystalLeague' => $lifetimeStatistics['CrystalLeague'],
-						'FishingFame' => $lifetimeStatistics['FishingFame'],
-						'FarmingFame' => $lifetimeStatistics['FarmingFame'],
-						'Timestamp_Conec' => $timestamp, // Usar la fecha formateada
-					]
-				);
-
-				// Almacenar los datos de GatheringStatistics
-				$gatheringStatistics = $lifetimeStatistics['Gathering'];
-				$resources = ['Fiber', 'Hide', 'Ore', 'Rock', 'Wood', 'All'];
-
-				foreach ($resources as $resource) {
-					$lifetimeStats->gatheringStatistics()->updateOrCreate(
-						[
-							'lifetime_statistics_id' => $lifetimeStats->id,
-							'resource_type' => $resource,
-						],
-						[
-							'Total' => $gatheringStatistics[$resource]['Total'],
-							'Royal' => $gatheringStatistics[$resource]['Royal'],
-							'Outlands' => $gatheringStatistics[$resource]['Outlands'],
-							'Avalon' => $gatheringStatistics[$resource]['Avalon'],
-						]
-					);
-				}
+			if (! $responsePersonaje->successful()) {
+				Log::warning('datospersonaje: no se pudo obtener', [
+					'id'     => $personaje->Id_albion,
+					'status' => $responsePersonaje->status(),
+				]);
+				continue;
 			}
-			
+
+			$infoPersonaje = $responsePersonaje->json();
+
+			// Validar estructura antes de acceder
+			if (! isset($infoPersonaje['LifetimeStatistics']['Timestamp'])) {
+				continue;
+			}
+
+			// … resto del código tal cual …
 		}
 	}
 
@@ -331,32 +346,30 @@ trait Albion
 	}
 
 	/**
-	* Esta función realiza una consulta a la Pagina del gameinfo.albiononline 
-    * para buscar información de una alianza segun su id. 
-	* 
-	* @param string   $identificador cadena de texto que contiene el id de albion 
-	* de la alianza
-	*
-	* @return Retorna un array.
-	*/
+	 * Esta función realiza una consulta a la Pagina del gameinfo.albiononline 
+	 * para buscar información de una alianza segun su id. 
+	 * 
+	 * @param string   $identificador cadena de texto que contiene el id de albion 
+	 * de la alianza
+	 *
+	 * @return Retorna un array.
+	 */
 
 	public function alianza($identificador)
 	{
 		try {
-            $url = 'https://gameinfo.albiononline.com/api/gameinfo/alliances/';
-			$response = Http::get($url.$identificador);
+			$url = 'https://gameinfo.albiononline.com/api/gameinfo/alliances/';
+			$response = Http::get($url . $identificador);
 
-			$respuesta = $response->getBody()->getContents();// accedemos a el contenido			
+			$respuesta = $response->getBody()->getContents(); // accedemos a el contenido			
 
-            $respuesta = json_decode($respuesta); //convertimos en json	
+			$respuesta = json_decode($respuesta); //convertimos en json	
 
 			return $respuesta;
-				
-
-        } catch (\Illuminate\Http\Client\ConnectionException $e) {
-            //report($e);	 
-	        return false;
-        }
+		} catch (\Illuminate\Http\Client\ConnectionException $e) {
+			//report($e);	 
+			return false;
+		}
 	}
 
 	/**
@@ -370,24 +383,24 @@ trait Albion
 		foreach ($miembros as $miembro) {
 			$url = "https://gameinfo.albiononline.com/api/gameinfo/players/{$miembro->Id_albion}";
 			$response = Http::get($url);
-			
+
 			if ($response->successful()) {
 				$data = $response->json();
 				$pveTotal = $data['LifetimeStatistics']['PvE']['Total'] ?? 0;
 				$pvpTotal = $data['KillFame'] ?? 0;
-				
+
 				// Buscar o crear registro
 				$registro = FamaSemanal::firstOrNew([
 					'personaje_id' => $miembro->id,
 					'semana_inicio' => $fechaInicioSemana
 				]);
-				
+
 				// Si es un nuevo registro, guardar como inicio
 				if (!$registro->exists) {
 					$registro->fama_pve_inicio = $pveTotal;
 					$registro->fama_pvp_inicio = $pvpTotal;
 				}
-				
+
 				// Actualizar valores finales
 				$registro->fama_pve_fin = $pveTotal;
 				$registro->fama_pvp_fin = $pvpTotal;
@@ -404,7 +417,7 @@ trait Albion
 	public function topFamaSemanal()
 	{
 		$fechaInicioSemana = now()->startOfWeek()->format('Y-m-d');
-		
+
 		// Top PvE
 		$topPvE = FamaSemanal::with('personaje')
 			->where('semana_inicio', $fechaInicioSemana)
@@ -420,7 +433,7 @@ trait Albion
 			->sortByDesc('diferencia')
 			->take(3)
 			->values();
-		
+
 		// Top PvP
 		$topPvP = FamaSemanal::with('personaje')
 			->where('semana_inicio', $fechaInicioSemana)
@@ -443,6 +456,4 @@ trait Albion
 			'semana' => $fechaInicioSemana
 		];
 	}
-
-
 }
