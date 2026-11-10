@@ -15,7 +15,6 @@ class IdentityController extends Controller
 {
     protected AlbionApiService $api;
 
-    // Inyectamos el servicio en el constructor
     public function __construct(AlbionApiService $api)
     {
         $this->api = $api;
@@ -38,39 +37,33 @@ class IdentityController extends Controller
         $character = null;
         $dataSource = 'api';
 
-        // ============================================================
-        // 1. Resolver el personaje (Lógica DB-First)
-        // ============================================================
-        if (!empty($validated['character_id'])) {
-            $character = $this->resolveCharacterById($validated['character_id'], $dataSource);
-            
-            if (!$character) {
-                return $this->rejected('El personaje no existe en Albion o la API está caída. Intenta más tarde.');
-            }
-        } else {
-            $character = $this->resolveCharacterByName($validated['character_name'], $dataSource);
-            
-            if (isset($character['error'])) {
-                return response()->json($character['error'], 200);
-            }
-        }
-
-        // ============================================================
-        // 2. ¿Ya está registrado por OTRO Discord user?
-        // ============================================================
-        $existing = Personaje::where('Id_albion', $character->Id)->first();
-
-        if ($existing && !empty($existing->discord_user_id) && $existing->discord_user_id !== $validated['discord_user_id']) {
-            return $this->rejected("El personaje **{$character->Name}** ya está vinculado a otra cuenta de Discord.");
-        }
-
-        $previousState = $this->capturePreviousState($existing);
-        $individual = $this->resolveIndividualDecision($character);
-
-        // ============================================================
-        // 3. Persistir vínculo
-        // ============================================================
         try {
+            // 1. Resolver el personaje (Lógica DB-First estricta)
+            if (!empty($validated['character_id'])) {
+                $character = $this->resolveCharacterById($validated['character_id'], $dataSource);
+                
+                if (!$character) {
+                    return $this->rejected('El personaje no existe en Albion o la API está temporalmente caída.');
+                }
+            } else {
+                $character = $this->resolveCharacterByName($validated['character_name'], $dataSource);
+                
+                if (isset($character['error'])) {
+                    return response()->json($character['error'], 200);
+                }
+            }
+
+            // 2. ¿Ya está registrado por OTRO Discord user?
+            $existing = Personaje::where('Id_albion', $character->Id)->first();
+
+            if ($existing && !empty($existing->discord_user_id) && $existing->discord_user_id !== $validated['discord_user_id']) {
+                return $this->rejected("El personaje **{$character->Name}** ya está vinculado a otra cuenta de Discord.");
+            }
+
+            $previousState = $this->capturePreviousState($existing);
+            $individual = $this->resolveIndividualDecision($character);
+
+            // 3. Persistir vínculo
             $payload = [
                 'Name'            => $character->Name,
                 'GuildId'         => $character->GuildId ?? null,
@@ -89,20 +82,18 @@ class IdentityController extends Controller
             }
 
             Personaje::updateOrCreate(['Id_albion' => $character->Id], $payload);
-        } catch (\Throwable $e) {
-            Log::error('Error persistiendo personaje en registerCharacter', ['error' => $e->getMessage()]);
-            return $this->rejected('Error interno al guardar el registro. Intenta más tarde.');
+
+        } catch (\Exception $e) {
+            // Atrapamos el error del Circuit Breaker o Timeout para que el bot NUNCA reciba un 500
+            Log::warning('registerCharacter falló por API/Datos:', ['error' => $e->getMessage()]);
+            
+            return $this->rejected(
+                'La API de Albion está experimentando problemas. ' 
+                . 'Si ya estabas registrado, intenta usar /sync. Si eres nuevo, intenta registrarte más tarde.'
+            );
         }
 
         $effective = $this->resolveEffectiveDecision($validated['discord_user_id']);
-
-        Log::info('Registro de personaje procesado', [
-            'data_source'        => $dataSource,
-            'discord_user_id'    => $validated['discord_user_id'],
-            'character'          => $character->Name,
-            'individual_decision' => $individual['decision'],
-            'effective_decision' => $effective['decision'],
-        ]);
 
         return response()->json([
             'success'              => true,
@@ -119,7 +110,7 @@ class IdentityController extends Controller
             'allied_guild'         => $effective['allied_guild'],
             'previous_state'       => $previousState,
             'guild_pending_allied' => $this->isGuildPendingAllied($character->GuildId ?? null),
-            'data_source'          => $dataSource, // NUEVO: El bot puede mostrar un warning si es db_fallback
+            'data_source'          => $dataSource,
         ]);
     }
 
@@ -139,8 +130,8 @@ class IdentityController extends Controller
         $previousState = $this->capturePreviousState($personaje);
         $dataSource = 'api';
         $character = null;
+        $individual = null;
 
-        // Intentar consultar la API (El sync es el único flujo que DEBE ir a la API si se puede)
         try {
             $apiData = $this->api->getCharacter($personaje->Id_albion);
             
@@ -159,19 +150,19 @@ class IdentityController extends Controller
                 throw new \Exception("API no devolvió datos válidos.");
             }
         } catch (\Exception $e) {
-            // FALLBACK: La API falló o está en Circuit Breaker
+            // FALLBACK: Si la API falla, usamos los datos de la DB para que el bot no colapse
             Log::warning('syncRegistration: fallo API, usando DB fallback', [
                 'discord_user_id' => $validated['discord_user_id'],
                 'error' => $e->getMessage()
             ]);
             
             $dataSource = 'db_fallback';
-            // Usamos los datos actuales de la DB
+            
             $character = (object) [
                 'Id' => $personaje->Id_albion,
                 'Name' => $personaje->Name,
                 'GuildId' => $personaje->GuildId,
-                'GuildName' => null, // No lo tenemos en DB usualmente
+                'GuildName' => null,
             ];
             
             $individual = $this->resolveIndividualDecision($character);
@@ -197,120 +188,19 @@ class IdentityController extends Controller
         ]);
     }
 
-    /**
-     * GET /api/bot/search-character
-     */
-    public function searchCharacter(Request $request): JsonResponse
-    {
-        $validated = $request->validate(['character_name' => 'required|string|max:50']);
-
-        // 1. Buscar en DB Primero (Es instantáneo)
-        $dbResults = Personaje::where('Name', 'like', "%{$validated['character_name']}%")
-            ->limit(10)
-            ->get();
-
-        if ($dbResults->isNotEmpty()) {
-            // Mapeamos el modelo a la estructura que espera el bot
-            $mappedResults = $dbResults->map(fn($p) => (object) [
-                'Id' => $p->Id_albion,
-                'Name' => $p->Name,
-                'GuildId' => $p->GuildId,
-                'GuildName' => null,
-                'AllianceId' => null,
-                'AllianceName' => null,
-                'KillFame' => 0,
-                'DeathFame' => 0,
-                'Avatar' => null,
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'count'   => $mappedResults->count(),
-                'players' => $mappedResults,
-                'source'  => 'db'
-            ]);
-        }
-
-        // 2. Si no está en DB, buscar en la API
-        try {
-            $candidates = $this->api->searchCharacter($validated['character_name']);
-            
-            if (empty($candidates)) {
-                return response()->json(['success' => false, 'reason' => "No se encontró a **{$validated['character_name']}**."], 200);
-            }
-
-            $exactMatches = array_filter($candidates, fn ($c) => strcasecmp($c->Name, $validated['character_name']) === 0);
-            $results = !empty($exactMatches) ? array_values($exactMatches) : $candidates;
-
-            return response()->json([
-                'success' => true,
-                'count'   => count($results),
-                'players' => $results,
-                'source'  => 'api'
-            ]);
-            
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false, 
-                'reason'  => 'Albion está experimentando problemas. Solo puedes buscar personajes ya registrados en la web.'
-            ], 200);
-        }
-    }
-
     // ================================================================
-    //                     HELPERS DE RESOLUCIÓN (DB-FIRST)
+    //                     HELPERS DE RESOLUCIÓN (DB-FIRST ESTRICTO)
     // ================================================================
 
     /**
-     * Resuelve un personaje por ID usando DB-First con 24h de validez.
+     * Resuelve un personaje por ID usando DB-First ESTRICTO.
+     * Si está en la DB, lo devuelve sin importar cuán viejo sea.
      */
     private function resolveCharacterById(string $id, string &$dataSource): ?object
     {
+        // 1. Buscar en DB
         $dbChar = Personaje::where('Id_albion', $id)->first();
 
-        // Si está en DB y fue verificado en las últimas 24h, confiamos en DB
-        if ($dbChar && $dbChar->last_verified_at && $dbChar->last_verified_at->diffInHours(now()) < 24) {
-            $dataSource = 'db';
-            return (object) [
-                'Id' => $dbChar->Id_albion,
-                'Name' => $dbChar->Name,
-                'GuildId' => $dbChar->GuildId,
-                'GuildName' => null,
-            ];
-        }
-
-        // Si no está, o es viejo, consultar la API
-        try {
-            $apiChar = $this->api->getCharacter($id);
-            if ($apiChar) {
-                $dataSource = 'api';
-                return $apiChar;
-            }
-        } catch (\Exception $e) {
-            // Si la API falla, y teníamos algo en DB, usamos el fallback
-            if ($dbChar) {
-                $dataSource = 'db_fallback';
-                return (object) [
-                    'Id' => $dbChar->Id_albion,
-                    'Name' => $dbChar->Name,
-                    'GuildId' => $dbChar->GuildId,
-                    'GuildName' => null,
-                ];
-            }
-            // Si no había nada, propagamos el error
-            throw $e;
-        }
-
-        return null;
-    }
-
-    /**
-     * Resuelve un personaje por Nombre usando DB-First.
-     */
-    private function resolveCharacterByName(string $name, string &$dataSource): object|array
-    {
-        // 1. Buscar en DB
-        $dbChar = Personaje::where('Name', $name)->first();
         if ($dbChar) {
             $dataSource = 'db';
             return (object) [
@@ -321,11 +211,45 @@ class IdentityController extends Controller
             ];
         }
 
-        // 2. Buscar en API
+        // 2. Si no está, consultar la API
+        try {
+            $apiChar = $this->api->getCharacter($id);
+            if ($apiChar) {
+                $dataSource = 'api';
+                return $apiChar;
+            }
+        } catch (\Exception $e) {
+            // Si la API falla, lanzamos la excepción para que sea atrapada por el try/catch principal
+            throw $e;
+        }
+
+        return null;
+    }
+
+    /**
+     * Resuelve un personaje por Nombre usando DB-First ESTRICTO.
+     */
+    private function resolveCharacterByName(string $name, string &$dataSource): object|array
+    {
+        // 1. Buscar en DB
+        $dbChar = Personaje::where('Name', $name)->first();
+        
+        if ($dbChar) {
+            $dataSource = 'db';
+            return (object) [
+                'Id' => $dbChar->Id_albion,
+                'Name' => $dbChar->Name,
+                'GuildId' => $dbChar->GuildId,
+                'GuildName' => null,
+            ];
+        }
+
+        // 2. Si no está, consultar la API
         try {
             $candidates = $this->api->searchCharacter($name);
+            
             if (empty($candidates)) {
-                return ['error' => ['success' => false, 'reason' => "No se encontró el personaje **{$name}**."]];
+                return ['error' => ['success' => false, 'reason' => "No se encontró el personaje **{$name}** en Albion."]];
             }
 
             $exactMatches = array_values(array_filter($candidates, fn ($c) => strcasecmp($c->Name, $name) === 0));
@@ -346,7 +270,8 @@ class IdentityController extends Controller
             return ['error' => ['success' => false, 'reason' => "No hay coincidencia exacta para **{$name}**."]];
 
         } catch (\Exception $e) {
-            return ['error' => ['success' => false, 'reason' => $e->getMessage()]];
+            // Propagamos la excepción para que el controlador la atrape
+            throw $e;
         }
     }
 
