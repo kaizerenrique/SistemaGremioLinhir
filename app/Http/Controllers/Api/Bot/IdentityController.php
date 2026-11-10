@@ -83,12 +83,15 @@ class IdentityController extends Controller
 
             Personaje::updateOrCreate(['Id_albion' => $character->Id], $payload);
 
-        } catch (\Exception $e) {
-            // Atrapamos el error del Circuit Breaker o Timeout para que el bot NUNCA reciba un 500
-            Log::warning('registerCharacter falló por API/Datos:', ['error' => $e->getMessage()]);
+        } catch (\Throwable $e) {
+            // Atrapamos cualquier error (\Exception y \Error) para que el bot NUNCA reciba un 500
+            Log::error('registerCharacter falló por API/Datos:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             
             return $this->rejected(
-                'La API de Albion está experimentando problemas. ' 
+                'La API de Albion o la base de datos está experimentando problemas. ' 
                 . 'Si ya estabas registrado, intenta usar /sync. Si eres nuevo, intenta registrarte más tarde.'
             );
         }
@@ -149,7 +152,7 @@ class IdentityController extends Controller
             } else {
                 throw new \Exception("API no devolvió datos válidos.");
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             // FALLBACK: Si la API falla, usamos los datos de la DB para que el bot no colapse
             Log::warning('syncRegistration: fallo API, usando DB fallback', [
                 'discord_user_id' => $validated['discord_user_id'],
@@ -192,13 +195,8 @@ class IdentityController extends Controller
     //                     HELPERS DE RESOLUCIÓN (DB-FIRST ESTRICTO)
     // ================================================================
 
-    /**
-     * Resuelve un personaje por ID usando DB-First ESTRICTO.
-     * Si está en la DB, lo devuelve sin importar cuán viejo sea.
-     */
     private function resolveCharacterById(string $id, string &$dataSource): ?object
     {
-        // 1. Buscar en DB
         $dbChar = Personaje::where('Id_albion', $id)->first();
 
         if ($dbChar) {
@@ -211,27 +209,21 @@ class IdentityController extends Controller
             ];
         }
 
-        // 2. Si no está, consultar la API
         try {
             $apiChar = $this->api->getCharacter($id);
             if ($apiChar) {
                 $dataSource = 'api';
                 return $apiChar;
             }
-        } catch (\Exception $e) {
-            // Si la API falla, lanzamos la excepción para que sea atrapada por el try/catch principal
+        } catch (\Throwable $e) {
             throw $e;
         }
 
         return null;
     }
 
-    /**
-     * Resuelve un personaje por Nombre usando DB-First ESTRICTO.
-     */
     private function resolveCharacterByName(string $name, string &$dataSource): object|array
     {
-        // 1. Buscar en DB
         $dbChar = Personaje::where('Name', $name)->first();
         
         if ($dbChar) {
@@ -244,7 +236,6 @@ class IdentityController extends Controller
             ];
         }
 
-        // 2. Si no está, consultar la API
         try {
             $candidates = $this->api->searchCharacter($name);
             
@@ -269,8 +260,7 @@ class IdentityController extends Controller
 
             return ['error' => ['success' => false, 'reason' => "No hay coincidencia exacta para **{$name}**."]];
 
-        } catch (\Exception $e) {
-            // Propagamos la excepción para que el controlador la atrape
+        } catch (\Throwable $e) {
             throw $e;
         }
     }
