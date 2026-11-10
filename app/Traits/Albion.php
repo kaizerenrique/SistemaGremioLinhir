@@ -285,26 +285,76 @@ trait Albion
 		foreach ($personajesRegistrados as $personaje) {
 			usleep(200_000); // 200 ms entre llamadas → máx ~5 req/s
 
-			$responsePersonaje = Http::timeout(10)
-				->retry(2, 1000)
-				->get("https://gameinfo.albiononline.com/api/gameinfo/players/{$personaje->Id_albion}");
+			try {
+				$responsePersonaje = Http::timeout(10)
+					->retry(2, 1000)
+					->get("https://gameinfo.albiononline.com/api/gameinfo/players/{$personaje->Id_albion}");
 
-			if (! $responsePersonaje->successful()) {
-				Log::warning('datospersonaje: no se pudo obtener', [
-					'id'     => $personaje->Id_albion,
-					'status' => $responsePersonaje->status(),
+				if (! $responsePersonaje->successful()) {
+					Log::warning('datospersonaje: no se pudo obtener', [
+						'id'     => $personaje->Id_albion,
+						'status' => $responsePersonaje->status(),
+					]);
+					continue;
+				}
+
+				$infoPersonaje = $responsePersonaje->json();
+
+				if (! isset($infoPersonaje['LifetimeStatistics']['Timestamp'])) {
+					continue;
+				}
+
+				$timestamp         = Carbon::parse($infoPersonaje['LifetimeStatistics']['Timestamp'])->toDateTimeString();
+				$lifetimeStatistics = $infoPersonaje['LifetimeStatistics'];
+
+				$lifetimeStats = $personaje->lifetimeStatistics()->updateOrCreate(
+					['personaje_id' => $personaje->id],
+					[
+						'PvE_Total'              => $lifetimeStatistics['PvE']['Total']              ?? 0,
+						'PvE_Royal'              => $lifetimeStatistics['PvE']['Royal']              ?? 0,
+						'PvE_Outlands'           => $lifetimeStatistics['PvE']['Outlands']           ?? 0,
+						'PvE_Avalon'             => $lifetimeStatistics['PvE']['Avalon']             ?? 0,
+						'PvE_Hellgate'           => $lifetimeStatistics['PvE']['Hellgate']           ?? 0,
+						'PvE_CorruptedDungeon'   => $lifetimeStatistics['PvE']['CorruptedDungeon']   ?? 0,
+						'PvE_Mists'              => $lifetimeStatistics['PvE']['Mists']              ?? 0,
+						'Crafting_Total'         => $lifetimeStatistics['Crafting']['Total']         ?? 0,
+						'Crafting_Royal'         => $lifetimeStatistics['Crafting']['Royal']         ?? 0,
+						'Crafting_Outlands'      => $lifetimeStatistics['Crafting']['Outlands']      ?? 0,
+						'Crafting_Avalon'        => $lifetimeStatistics['Crafting']['Avalon']        ?? 0,
+						'CrystalLeague'          => $lifetimeStatistics['CrystalLeague']             ?? 0,
+						'FishingFame'            => $lifetimeStatistics['FishingFame']               ?? 0,
+						'FarmingFame'            => $lifetimeStatistics['FarmingFame']               ?? 0,
+						'Timestamp_Conec'        => $timestamp,
+					]
+				);
+
+				$gatheringStatistics = $lifetimeStatistics['Gathering'] ?? [];
+				$resources = ['Fiber', 'Hide', 'Ore', 'Rock', 'Wood', 'All'];
+
+				foreach ($resources as $resource) {
+					if (! isset($gatheringStatistics[$resource])) {
+						continue;
+					}
+					$lifetimeStats->gatheringStatistics()->updateOrCreate(
+						[
+							'lifetime_statistics_id' => $lifetimeStats->id,
+							'resource_type'          => $resource,
+						],
+						[
+							'Total'    => $gatheringStatistics[$resource]['Total']    ?? 0,
+							'Royal'    => $gatheringStatistics[$resource]['Royal']    ?? 0,
+							'Outlands' => $gatheringStatistics[$resource]['Outlands'] ?? 0,
+							'Avalon'   => $gatheringStatistics[$resource]['Avalon']   ?? 0,
+						]
+					);
+				}
+			} catch (\Throwable $e) {
+				Log::warning('datospersonaje: excepción procesando personaje', [
+					'id'    => $personaje->Id_albion,
+					'error' => $e->getMessage(),
 				]);
 				continue;
 			}
-
-			$infoPersonaje = $responsePersonaje->json();
-
-			// Validar estructura antes de acceder
-			if (! isset($infoPersonaje['LifetimeStatistics']['Timestamp'])) {
-				continue;
-			}
-
-			// … resto del código tal cual …
 		}
 	}
 
