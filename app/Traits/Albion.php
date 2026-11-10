@@ -247,19 +247,20 @@ trait Albion
 
 			// 5. Alta / actualización de miembros actuales
 			foreach ($integrantes as $integrante) {
-				if (empty($integrante['Id'])) {
-					continue;
-				}
+                if (empty($integrante['Id'])) {
+                    continue;
+                }
 
-				Personaje::updateOrCreate(
-					['Id_albion' => $integrante['Id']],
-					[
-						'Name'    => $integrante['Name'],
-						'GuildId' => $integrante['GuildId'] ?? $linhir_id,
-						'miembro' => true,
-					]
-				);
-			}
+                Personaje::updateOrCreate(
+                    ['Id_albion' => $integrante['Id']],
+                    [
+                        'Name'    => $integrante['Name'],
+                        'GuildId' => $integrante['GuildId'] ?? $linhir_id,
+                        'miembro' => true, // <--- FORZAMOS A TRUE AQUÍ
+                        'last_verified_at' => now(), // <--- Buena práctica actualizar la fecha
+                    ]
+                );
+            }
 
 			Log::info('integrantesdelgremiolinhir: sincronización OK', [
 				'api_count' => count($integrantes),

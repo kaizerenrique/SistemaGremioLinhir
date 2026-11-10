@@ -3,11 +3,11 @@
     <!-- ========================================== -->
     <!-- FILA 1: KPIs ECONÓMICOS Y DE GUERRA        -->
     <!-- ========================================== -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Precio del Oro -->
         <div class="bg-base-300 p-4 rounded-lg border border-accent/30 flex items-center gap-4 shadow-sm">
-            <div class="bg-accent/20 p-3 rounded-full text-accent">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <div class="bg-accent/20 p-3 rounded-full text-accent shrink-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             </div>
             <div>
                 <p class="text-xs text-content-light/60 uppercase tracking-wider">Precio del Oro</p>
@@ -17,8 +17,8 @@
 
         <!-- Banco Gremial -->
         <div class="bg-base-300 p-4 rounded-lg border border-success/30 flex items-center gap-4 shadow-sm">
-            <div class="bg-success/20 p-3 rounded-full text-success">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+            <div class="bg-success/20 p-3 rounded-full text-success shrink-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
             </div>
             <div>
                 <p class="text-xs text-content-light/60 uppercase tracking-wider">Banco Gremial</p>
@@ -28,31 +28,53 @@
 
         <!-- K/D Semanal -->
         <div class="bg-base-300 p-4 rounded-lg border border-primary/30 flex items-center gap-4 shadow-sm">
-            <div class="bg-primary/20 p-3 rounded-full text-primary">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            <div class="bg-primary/20 p-3 rounded-full text-primary shrink-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
             </div>
             <div>
-                <p class="text-xs text-content-light/60 uppercase tracking-wider">K/D de la Semana</p>
-                <p class="text-2xl font-bold {{ $weeklyKdr >= 1 ? 'text-success' : 'text-error' }}">
-                    {{ $weeklyKdr }}
-                </p>
+                <p class="text-xs text-content-light/60 uppercase tracking-wider">K/D Semanal</p>
+                <p class="text-2xl font-bold {{ $weeklyKdr >= 1 ? 'text-success' : 'text-error' }}">{{ $weeklyKdr }}</p>
+            </div>
+        </div>
+
+        <!-- Silver Distribuido -->
+        <div class="bg-base-300 p-4 rounded-lg border border-base-300 flex items-center gap-4 shadow-sm">
+            <div class="bg-info/20 p-3 rounded-full text-info shrink-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <div>
+                <p class="text-xs text-content-light/60 uppercase tracking-wider">Silver Actividades</p>
+                <p class="text-2xl font-bold text-info">{{ number_format($weeklyActivitySilver) }}</p>
+                <p class="text-xs text-content-light/50">Esta semana</p>
             </div>
         </div>
     </div>
 
     <!-- ========================================== -->
-    <!-- FILA 2: COMUNIDAD Y CRECIMIENTO            -->
+    <!-- FILA 2: COMUNIDAD Y ALIADOS                -->
     <!-- ========================================== -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         
-        <!-- Total Integrantes Albion -->
+        <!-- Total Integrantes Linhir -->
         <div class="bg-base-300 p-4 rounded-lg border border-primary/30 flex items-center gap-3">
             <div class="bg-primary/20 p-2 rounded-full text-primary shrink-0">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
             </div>
             <div class="min-w-0">
-                <p class="text-xs text-content-light/60 uppercase">Integrantes</p>
-                <p class="text-xl font-bold text-content-accent truncate">{{ $totalMembers }} <span class="text-sm font-normal text-content-light">en gremio</span></p>
+                <p class="text-xs text-content-light/60 uppercase">Miembros Linhir</p>
+                <p class="text-xl font-bold text-content-accent truncate">{{ $totalMembers }}</p>
+            </div>
+        </div>
+
+        <!-- Gremios Aliados -->
+        <div class="bg-base-300 p-4 rounded-lg border border-secondary/30 flex items-center gap-3">
+            <div class="bg-secondary/20 p-2 rounded-full text-secondary shrink-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <div class="min-w-0">
+                <p class="text-xs text-content-light/60 uppercase">Aliados (HRL)</p>
+                <p class="text-xl font-bold text-secondary truncate">{{ $alliedGuildsCount }} <span class="text-xs font-normal text-content-light/60">gremios</span></p>
+                <p class="text-xs text-content-light/50">{{ $alliedMembersCount }} integrantes</p>
             </div>
         </div>
 
@@ -70,7 +92,6 @@
             <div class="min-w-0">
                 <p class="text-xs text-[#5865F2] font-semibold uppercase">Discord</p>
                 <p class="text-xl font-bold text-content-accent truncate">{{ $discordMembersCount }}</p>
-                <p class="text-xs text-content-light/50 truncate">{{ $discordGuildInfo['name'] ?? 'No conectado' }}</p>
             </div>
         </div>
 
@@ -81,26 +102,9 @@
             </div>
             <div class="min-w-0">
                 <p class="text-xs text-content-light/60 uppercase">Vinculados Web</p>
-                <p class="text-xl font-bold text-content-accent truncate">{{ $linkPercentage }}% <span class="text-sm font-normal text-content-light">({{ $linkedMembers }}/{{ $totalMembers }})</span></p>
+                <p class="text-xl font-bold text-content-accent truncate">{{ $linkPercentage }}%</p>
+                <p class="text-xs text-content-light/50">{{ $linkedMembers }} de {{ $totalMembers }}</p>
             </div>
-        </div>
-
-        <!-- Último en ingresar -->
-        <div class="bg-base-300 p-4 rounded-lg border border-base-300">
-            <p class="text-xs text-content-light/60 uppercase mb-1">Último en ingresar</p>
-            @if($lastJoinedMember)
-                <div class="flex items-center gap-2">
-                    <span class="text-lg font-bold text-primary truncate">{{ $lastJoinedMember->Name }}</span>
-                    @if($lastJoinedMember->discord_user_id)
-                        <span title="Vinculado a Discord" class="text-success text-sm shrink-0">✅</span>
-                    @else
-                        <span title="No vinculado" class="text-warning text-sm shrink-0">⚠️</span>
-                    @endif
-                </div>
-                <p class="text-xs text-content-light/50">{{ $lastJoinedMember->created_at->diffForHumans() }}</p>
-            @else
-                <p class="text-sm text-content-light/50">Sin datos</p>
-            @endif
         </div>
 
         <!-- Top Recolector -->
@@ -118,11 +122,60 @@
     </div>
 
     <!-- ========================================== -->
-    <!-- FILA 3: GUERRA Y OPERACIONES               -->
+    <!-- FILA 3: FLUJO DE MIEMBROS                  -->
+    <!-- ========================================== -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Últimos en unirse -->
+        <div class="bg-base-300 rounded-lg border border-base-300 p-4 shadow-sm">
+            <h3 class="text-md font-bold text-success mb-3 border-b border-success/20 pb-2 flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+                Últimos en unirse a Linhir
+            </h3>
+            <ul class="space-y-3">
+                @forelse($recentJoins as $join)
+                    <li class="flex justify-between items-center text-sm">
+                        <div class="flex items-center gap-2">
+                            <span class="text-content-light font-medium">{{ $join->Name }}</span>
+                            @if($join->discord_user_id)
+                                <span title="Vinculado a Discord" class="text-success text-xs">✅</span>
+                            @endif
+                        </div>
+                        <span class="text-xs text-content-light/50">{{ $join->created_at->diffForHumans() }}</span>
+                    </li>
+                @empty
+                    <li class="text-sm text-content-light/50 text-center py-2">No hay registros recientes.</li>
+                @endforelse
+            </ul>
+        </div>
+
+        <!-- Últimos en retirarse -->
+        <div class="bg-base-300 rounded-lg border border-base-300 p-4 shadow-sm">
+            <h3 class="text-md font-bold text-error mb-3 border-b border-error/20 pb-2 flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6"></path></svg>
+                Últimos en retirarse de Linhir
+            </h3>
+            <ul class="space-y-3">
+                @forelse($recentLeaves as $leave)
+                    <li class="flex justify-between items-center text-sm">
+                        <div class="flex flex-col">
+                            <span class="text-content-light font-medium">{{ $leave->Name }}</span>
+                            <span class="text-xs text-content-light/50">Gremio actual: {{ $leave->GuildId ? 'Otro' : 'Ninguno' }}</span>
+                        </div>
+                        <span class="text-xs text-content-light/50">{{ $leave->updated_at->diffForHumans() }}</span>
+                    </li>
+                @empty
+                    <li class="text-sm text-content-light/50 text-center py-2">No hay retiros recientes.</li>
+                @endforelse
+            </ul>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- FILA 4: GUERRA Y OPERACIONES               -->
     <!-- ========================================== -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        <!-- Columna Izquierda: Últimas Batallas (Ocupa 2 columnas) -->
+        <!-- Columna Izquierda: Últimas Batallas -->
         <div class="lg:col-span-2 space-y-6">
             <div class="bg-base-300 rounded-lg border border-base-300 shadow-sm">
                 <div class="p-4 border-b border-primary/20 flex justify-between items-center">
@@ -165,6 +218,31 @@
                 </div>
             </div>
             @endif
+
+            <!-- Balance Semanal -->
+            <div class="bg-base-300 rounded-lg border border-base-300 p-5 shadow-sm">
+                <h3 class="text-md font-bold text-content-accent mb-3 border-b border-primary/20 pb-2 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-info" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    Movimientos (Semana)
+                </h3>
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between items-center text-success">
+                        <span>Ingresos</span>
+                        <span class="font-bold">+{{ number_format($weeklyGuildIncome) }}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-error">
+                        <span>Egresos</span>
+                        <span class="font-bold">-{{ number_format($weeklyGuildExpense) }}</span>
+                    </div>
+                    <div class="border-t border-base-200 mt-2 pt-2 flex justify-between items-center font-bold text-content-accent">
+                        <span>Balance Neto</span>
+                        @php $net = $weeklyGuildIncome - $weeklyGuildExpense; @endphp
+                        <span class="{{ $net >= 0 ? 'text-success' : 'text-error' }}">
+                            {{ $net >= 0 ? '+' : '' }}{{ number_format($net) }}
+                        </span>
+                    </div>
+                </div>
+            </div>
 
             <!-- Tareas y Retiros Pendientes -->
             @can('manage_tasks')

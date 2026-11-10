@@ -48,7 +48,7 @@ class IdentityController extends Controller
             } else {
                 $character = $this->resolveCharacterByName($validated['character_name'], $dataSource);
                 
-                // CORRECCIÓN AQUÍ: Verificamos si es un array antes de buscar la clave 'error'
+                // Validar si el helper devolvió un array de error
                 if (is_array($character) && isset($character['error'])) {
                     return response()->json($character['error'], 200);
                 }
@@ -64,11 +64,24 @@ class IdentityController extends Controller
             $previousState = $this->capturePreviousState($existing);
             $individual = $this->resolveIndividualDecision($character);
 
+            // =====================================================================
+            // CORRECCIÓN: Evitar degradar a "false" a un miembro ya registrado
+            // =====================================================================
+            $isMember = $individual['decision'] === 'member';
+            $guildId = $character->GuildId ?? $existing->GuildId ?? null;
+
+            // Si el personaje ya existía en la DB y era miembro, mantenemos su estado
+            // a menos que la API (en tiempo real) confirme explícitamente que se fue.
+            if ($existing && $existing->miembro && $dataSource === 'db') {
+                $isMember = true;
+                $guildId = $existing->GuildId; // Conservamos el GuildId de Linhir
+            }
+
             // 3. Persistir vínculo
             $payload = [
                 'Name'            => $character->Name,
-                'GuildId'         => $character->GuildId ?? null,
-                'miembro'         => $individual['decision'] === 'member',
+                'GuildId'         => $guildId,
+                'miembro'         => $isMember,
                 'allied_guild_id' => $individual['allied_guild_id'],
                 'discord_user_id' => $validated['discord_user_id'],
             ];
@@ -85,6 +98,7 @@ class IdentityController extends Controller
             Personaje::updateOrCreate(['Id_albion' => $character->Id], $payload);
 
         } catch (\Throwable $e) {
+            // Atrapamos cualquier error (\Exception y \Error) para que el bot NUNCA reciba un 500
             Log::error('registerCharacter falló por API/Datos:', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()

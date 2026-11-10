@@ -40,6 +40,12 @@ class SyncAlliedGuilds extends Command
         $this->info("Iniciando sincronización de {$aliados->count()} gremios aliados...");
 
         foreach ($aliados as $aliado) {
+            // NUEVO: Evitar que Linhir se sincronice como aliado y ponga a todos en false
+            if ($aliado->guild_id === config('app.linhir_gremio_id')) {
+                $this->warn("  ⏭️ Saltando a Linhir (no puede ser aliado de sí mismo).");
+                continue;
+            }
+            
             $this->line("Consultando gremio: {$aliado->guild_name} ({$aliado->guild_id})...");
 
             try {
