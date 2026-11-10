@@ -48,7 +48,8 @@ class IdentityController extends Controller
             } else {
                 $character = $this->resolveCharacterByName($validated['character_name'], $dataSource);
                 
-                if (isset($character['error'])) {
+                // CORRECCIÓN AQUÍ: Verificamos si es un array antes de buscar la clave 'error'
+                if (is_array($character) && isset($character['error'])) {
                     return response()->json($character['error'], 200);
                 }
             }
@@ -84,14 +85,13 @@ class IdentityController extends Controller
             Personaje::updateOrCreate(['Id_albion' => $character->Id], $payload);
 
         } catch (\Throwable $e) {
-            // Atrapamos cualquier error (\Exception y \Error) para que el bot NUNCA reciba un 500
             Log::error('registerCharacter falló por API/Datos:', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
             
             return $this->rejected(
-                'La API de Albion o la base de datos está experimentando problemas. ' 
+                'Ocurrió un error interno procesando los datos. ' 
                 . 'Si ya estabas registrado, intenta usar /sync. Si eres nuevo, intenta registrarte más tarde.'
             );
         }
@@ -153,7 +153,6 @@ class IdentityController extends Controller
                 throw new \Exception("API no devolvió datos válidos.");
             }
         } catch (\Throwable $e) {
-            // FALLBACK: Si la API falla, usamos los datos de la DB para que el bot no colapse
             Log::warning('syncRegistration: fallo API, usando DB fallback', [
                 'discord_user_id' => $validated['discord_user_id'],
                 'error' => $e->getMessage()
@@ -224,7 +223,8 @@ class IdentityController extends Controller
 
     private function resolveCharacterByName(string $name, string &$dataSource): object|array
     {
-        $dbChar = Personaje::where('Name', $name)->first();
+        // Búsqueda en DB ignorando mayúsculas/minúsculas para evitar fallos
+        $dbChar = Personaje::whereRaw('LOWER(Name) = ?', [strtolower(trim($name))])->first();
         
         if ($dbChar) {
             $dataSource = 'db';
