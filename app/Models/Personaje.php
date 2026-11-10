@@ -14,7 +14,13 @@ class Personaje extends Model
         'GuildId',
         'allied_guild_id', 
         'miembro',
-        'birthdate'
+        'birthdate',
+        'last_verified_at',
+    ];
+
+    protected $casts = [
+        'last_verified_at' => 'datetime',
+        'miembro' => 'boolean',
     ];
 
     public function user(){

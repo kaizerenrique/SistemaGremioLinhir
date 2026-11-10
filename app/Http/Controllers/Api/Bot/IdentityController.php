@@ -5,23 +5,24 @@ namespace App\Http\Controllers\Api\Bot;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Personaje;
-use App\Traits\Albion;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use App\Models\AlliedGuild;
-
+use App\Services\Albion\AlbionApiService;
 
 class IdentityController extends Controller
 {
-    use Albion;
+    protected AlbionApiService $api;
+
+    // Inyectamos el servicio en el constructor
+    public function __construct(AlbionApiService $api)
+    {
+        $this->api = $api;
+    }
 
     /**
      * POST /api/bot/register-character
-     *
-     * Registra/actualiza el vínculo de un personaje con un usuario de Discord.
-     * Devuelve la decisión EFECTIVA del usuario (basada en TODOS sus personajes)
-     * y el estado previo del personaje registrado (para auditoría).
      */
     public function registerCharacter(Request $request): JsonResponse
     {
@@ -34,50 +35,23 @@ class IdentityController extends Controller
             'performed_by_discord_id' => 'nullable|string|max:32',
         ]);
 
+        $character = null;
+        $dataSource = 'api';
+
         // ============================================================
-        // 1. Resolver el personaje
+        // 1. Resolver el personaje (Lógica DB-First)
         // ============================================================
         if (!empty($validated['character_id'])) {
-            $character = $this->consultarpersonaje($validated['character_id']);
-            if (!$character || !isset($character->Id)) {
-                return $this->rejected(
-                    'El personaje seleccionado no existe en Albion. '
-                    . 'Intenta la búsqueda de nuevo.'
-                );
+            $character = $this->resolveCharacterById($validated['character_id'], $dataSource);
+            
+            if (!$character) {
+                return $this->rejected('El personaje no existe en Albion o la API está caída. Intenta más tarde.');
             }
         } else {
-            $candidates = $this->buscarpersonajepornombre($validated['character_name']);
-
-            if (empty($candidates)) {
-                return $this->rejected(
-                    "No se encontró el personaje **{$validated['character_name']}** "
-                    . 'en el servidor America (West). Verifica el nombre exacto.'
-                );
-            }
-
-            $exactMatches = array_values(array_filter(
-                $candidates,
-                fn ($c) => strcasecmp($c->Name, $validated['character_name']) === 0
-            ));
-
-            if (count($exactMatches) > 1) {
-                return response()->json([
-                    'success'   => false,
-                    'ambiguous' => true,
-                    'reason'    => "Se encontraron **" . count($exactMatches) . " personajes** "
-                                 . "con el nombre **{$validated['character_name']}**. "
-                                 . 'Usa `/register search` para elegir el tuyo.',
-                ], 200);
-            }
-
-            if (count($exactMatches) === 1) {
-                $character = $exactMatches[0];
-            } else {
-                return $this->rejected(
-                    "No se encontró coincidencia exacta para **{$validated['character_name']}**. "
-                    . 'Verifica mayúsculas y ortografía, o usa `/register search` '
-                    . 'para ver todos los resultados.'
-                );
+            $character = $this->resolveCharacterByName($validated['character_name'], $dataSource);
+            
+            if (isset($character['error'])) {
+                return response()->json($character['error'], 200);
             }
         }
 
@@ -86,29 +60,15 @@ class IdentityController extends Controller
         // ============================================================
         $existing = Personaje::where('Id_albion', $character->Id)->first();
 
-        if (
-            $existing
-            && !empty($existing->discord_user_id)
-            && $existing->discord_user_id !== $validated['discord_user_id']
-        ) {
-            return $this->rejected(
-                "El personaje **{$character->Name}** ya está vinculado a otra cuenta de Discord. "
-                . 'Si crees que es un error, contacta a un oficial.'
-            );
+        if ($existing && !empty($existing->discord_user_id) && $existing->discord_user_id !== $validated['discord_user_id']) {
+            return $this->rejected("El personaje **{$character->Name}** ya está vinculado a otra cuenta de Discord.");
         }
 
-        // ============================================================
-        // 3. Capturar estado previo (para auditoría)
-        // ============================================================
         $previousState = $this->capturePreviousState($existing);
-
-        // ============================================================
-        // 4. Resolver decisión del personaje actual
-        // ============================================================
         $individual = $this->resolveIndividualDecision($character);
 
         // ============================================================
-        // 5. Persistir vínculo
+        // 3. Persistir vínculo
         // ============================================================
         try {
             $payload = [
@@ -119,45 +79,29 @@ class IdentityController extends Controller
                 'discord_user_id' => $validated['discord_user_id'],
             ];
 
+            // Solo actualizamos la fecha de verificación si de verdad fuimos a la API
+            if ($dataSource === 'api') {
+                $payload['last_verified_at'] = now();
+            }
+
             if (!empty($validated['birthdate'])) {
                 $payload['birthdate'] = $validated['birthdate'];
             }
 
-            Personaje::updateOrCreate(
-                ['Id_albion' => $character->Id],
-                $payload
-            );
+            Personaje::updateOrCreate(['Id_albion' => $character->Id], $payload);
         } catch (\Throwable $e) {
-            Log::error('Error persistiendo personaje en registerCharacter', [
-                'character_id' => $character->Id,
-                'error'        => $e->getMessage(),
-            ]);
+            Log::error('Error persistiendo personaje en registerCharacter', ['error' => $e->getMessage()]);
             return $this->rejected('Error interno al guardar el registro. Intenta más tarde.');
         }
 
-        // ============================================================
-        // 6. Decisión EFECTIVA (considera TODOS los personajes del user)
-        // ============================================================
         $effective = $this->resolveEffectiveDecision($validated['discord_user_id']);
 
-        // ============================================================
-        // 7. Respuesta
-        // ============================================================
-        $characterPayload = [
-            'name'       => $character->Name,
-            'id'         => $character->Id,
-            'guild_id'   => $character->GuildId ?? null,
-            'guild_name' => $character->GuildName ?? null,
-            'birthdate'  => $validated['birthdate'] ?? null,
-        ];
-
         Log::info('Registro de personaje procesado', [
+            'data_source'        => $dataSource,
             'discord_user_id'    => $validated['discord_user_id'],
             'character'          => $character->Name,
             'individual_decision' => $individual['decision'],
             'effective_decision' => $effective['decision'],
-            'previous_state'     => $previousState,
-            'performed_by'       => $validated['performed_by_discord_id'] ?? 'self',
         ]);
 
         return response()->json([
@@ -165,78 +109,75 @@ class IdentityController extends Controller
             'decision'             => $effective['decision'],
             'character_decision'   => $individual['decision'],
             'reason'               => $this->reasonFor($effective['decision'], $character),
-            'character'            => $characterPayload,
+            'character'            => [
+                'name'       => $character->Name,
+                'id'         => $character->Id,
+                'guild_id'   => $character->GuildId ?? null,
+                'guild_name' => $character->GuildName ?? null,
+                'birthdate'  => $validated['birthdate'] ?? null,
+            ],
             'allied_guild'         => $effective['allied_guild'],
             'previous_state'       => $previousState,
             'guild_pending_allied' => $this->isGuildPendingAllied($character->GuildId ?? null),
+            'data_source'          => $dataSource, // NUEVO: El bot puede mostrar un warning si es db_fallback
         ]);
     }
 
-    private function rejected(string $reason): JsonResponse
-    {
-        return response()->json([
-            'success'  => false,
-            'decision' => 'rejected',
-            'reason'   => $reason,
-        ], 200);
-    }
-
-    
     /**
      * POST /api/bot/sync-registration
-     *
-     * Sincroniza el estado de un personaje ya registrado con Albion.
-     * Devuelve la decisión EFECTIVA del usuario.
      */
     public function syncRegistration(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'discord_user_id' => 'required|string|max:32',
-        ]);
+        $validated = $request->validate(['discord_user_id' => 'required|string|max:32']);
 
         $personaje = Personaje::where('discord_user_id', $validated['discord_user_id'])->first();
 
         if (!$personaje) {
-            return response()->json([
-                'success' => false,
-                'reason'  => 'Este usuario de Discord no tiene un personaje registrado. '
-                    . 'Usa `/register start` primero.',
-            ], 200);
-        }
-
-        $character = $this->consultarpersonaje($personaje->Id_albion);
-
-        if (!$character || !isset($character->Id)) {
-            Log::warning('syncRegistration: personaje no encontrado en Albion', [
-                'discord_user_id' => $validated['discord_user_id'],
-                'id_albion'       => $personaje->Id_albion,
-            ]);
-            return response()->json([
-                'success' => false,
-                'reason'  => 'No se pudo consultar el estado actual del personaje en Albion. '
-                    . 'Intenta más tarde.',
-            ], 200);
+            return $this->rejected('Este usuario de Discord no tiene un personaje registrado. Usa `/register start` primero.');
         }
 
         $previousState = $this->capturePreviousState($personaje);
-        $individual    = $this->resolveIndividualDecision($character);
+        $dataSource = 'api';
+        $character = null;
 
-        // Persistir estado actualizado
-        $personaje->update([
-            'GuildId'         => $character->GuildId ?? null,
-            'miembro'         => $individual['decision'] === 'member',
-            'allied_guild_id' => $individual['allied_guild_id'],
-        ]);
+        // Intentar consultar la API (El sync es el único flujo que DEBE ir a la API si se puede)
+        try {
+            $apiData = $this->api->getCharacter($personaje->Id_albion);
+            
+            if ($apiData && isset($apiData->Id)) {
+                $character = $apiData;
+                $individual = $this->resolveIndividualDecision($character);
+                
+                $personaje->update([
+                    'Name' => $character->Name,
+                    'GuildId' => $character->GuildId ?? null,
+                    'miembro' => $individual['decision'] === 'member',
+                    'allied_guild_id' => $individual['allied_guild_id'],
+                    'last_verified_at' => now(),
+                ]);
+            } else {
+                throw new \Exception("API no devolvió datos válidos.");
+            }
+        } catch (\Exception $e) {
+            // FALLBACK: La API falló o está en Circuit Breaker
+            Log::warning('syncRegistration: fallo API, usando DB fallback', [
+                'discord_user_id' => $validated['discord_user_id'],
+                'error' => $e->getMessage()
+            ]);
+            
+            $dataSource = 'db_fallback';
+            // Usamos los datos actuales de la DB
+            $character = (object) [
+                'Id' => $personaje->Id_albion,
+                'Name' => $personaje->Name,
+                'GuildId' => $personaje->GuildId,
+                'GuildName' => null, // No lo tenemos en DB usualmente
+            ];
+            
+            $individual = $this->resolveIndividualDecision($character);
+        }
 
         $effective = $this->resolveEffectiveDecision($validated['discord_user_id']);
-
-        Log::info('syncRegistration ejecutado', [
-            'discord_user_id'    => $validated['discord_user_id'],
-            'character'          => $character->Name,
-            'individual_decision' => $individual['decision'],
-            'effective_decision' => $effective['decision'],
-            'previous_state'     => $previousState,
-        ]);
 
         return response()->json([
             'success'              => true,
@@ -252,247 +193,206 @@ class IdentityController extends Controller
             'allied_guild'         => $effective['allied_guild'],
             'previous_state'       => $previousState,
             'guild_pending_allied' => $this->isGuildPendingAllied($character->GuildId ?? null),
+            'data_source'          => $dataSource,
         ]);
     }
 
     /**
-     * GET /api/bot/allied-guilds
-     *
-     * Catálogo de gremios aliados activos y configurados.
-     * El bot lo usa para saber qué roles remover cuando un usuario
-     * cambia de estado.
+     * GET /api/bot/search-character
      */
-    public function alliedGuilds(): JsonResponse
-    {
-        $guilds = AlliedGuild::where('active', true)
-            ->whereNotNull('tag')
-            ->whereNotNull('discord_role_id')
-            ->orderBy('guild_name')
-            ->get(['guild_id', 'guild_name', 'tag', 'discord_role_id']);
-
-        return response()->json([
-            'success' => true,
-            'guilds'  => $guilds,
-        ]);
-    }
-
-    /**
-     * GET /api/bot/members
-     *
-     * Roster completo para reporte de integridad + comando /admin rebuild_roles.
-     */
-    public function listMembers(Request $request): JsonResponse
-    {
-        $linhirGuildId = config('app.linhir_gremio_id');
-
-        $guildMembers = Personaje::with('alliedGuild:id,guild_id,guild_name,tag,discord_role_id')
-            ->where('miembro', true)
-            ->orderBy('Name')
-            ->get(['Name', 'Id_albion', 'GuildId', 'allied_guild_id', 'discord_user_id']);
-
-        $linkedToDiscord = Personaje::with('alliedGuild:id,guild_id,guild_name,tag,discord_role_id')
-            ->whereNotNull('discord_user_id')
-            ->orderBy('Name')
-            ->get(['Name', 'Id_albion', 'GuildId', 'allied_guild_id', 'miembro', 'discord_user_id']);
-
-        $guildRegistered   = $guildMembers->filter(fn($p) => !empty($p->discord_user_id));
-        $guildUnregistered = $guildMembers->filter(fn($p) => empty($p->discord_user_id));
-
-        return response()->json([
-            'success'  => true,
-            'guild_id' => $linhirGuildId,
-
-            'totals' => [
-                'guild_members'      => $guildMembers->count(),
-                'linked_total'       => $linkedToDiscord->count(),
-                'guild_registered'   => $guildRegistered->count(),
-                'guild_unregistered' => $guildUnregistered->count(),
-            ],
-
-            'guild_registered' => $guildRegistered->map(fn($p) => [
-                'name'            => $p->Name,
-                'id_albion'       => $p->Id_albion,
-                'discord_user_id' => $p->discord_user_id,
-                'allied_guild_id' => $p->allied_guild_id,
-                'allied_guild'    => $p->alliedGuild ? [
-                    'guild_name'      => $p->alliedGuild->guild_name,
-                    'tag'             => $p->alliedGuild->tag,
-                    'discord_role_id' => $p->alliedGuild->discord_role_id,
-                ] : null,
-            ])->values(),
-
-            'guild_unregistered' => $guildUnregistered->map(fn($p) => [
-                'name'      => $p->Name,
-                'id_albion' => $p->Id_albion,
-            ])->values(),
-
-            'all_linked' => $linkedToDiscord->map(fn($p) => [
-                'name'            => $p->Name,
-                'id_albion'       => $p->Id_albion,
-                'miembro'         => (bool) $p->miembro,
-                'discord_user_id' => $p->discord_user_id,
-                'allied_guild_id' => $p->allied_guild_id,
-                'allied_guild'    => $p->alliedGuild ? [
-                    'guild_name'      => $p->alliedGuild->guild_name,
-                    'tag'             => $p->alliedGuild->tag,
-                    'discord_role_id' => $p->alliedGuild->discord_role_id,
-                ] : null,
-            ])->values(),
-        ]);
-    }
-
     public function searchCharacter(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'character_name' => 'required|string|max:50',
-        ]);
+        $validated = $request->validate(['character_name' => 'required|string|max:50']);
 
-        $candidates = $this->buscarpersonajepornombre($validated['character_name']);
+        // 1. Buscar en DB Primero (Es instantáneo)
+        $dbResults = Personaje::where('Name', 'like', "%{$validated['character_name']}%")
+            ->limit(10)
+            ->get();
 
-        if (empty($candidates)) {
+        if ($dbResults->isNotEmpty()) {
+            // Mapeamos el modelo a la estructura que espera el bot
+            $mappedResults = $dbResults->map(fn($p) => (object) [
+                'Id' => $p->Id_albion,
+                'Name' => $p->Name,
+                'GuildId' => $p->GuildId,
+                'GuildName' => null,
+                'AllianceId' => null,
+                'AllianceName' => null,
+                'KillFame' => 0,
+                'DeathFame' => 0,
+                'Avatar' => null,
+            ]);
+
             return response()->json([
-                'success' => false,
-                'reason'  => "No se encontró ningún personaje con el nombre **{$validated['character_name']}**.",
-            ], 200);
+                'success' => true,
+                'count'   => $mappedResults->count(),
+                'players' => $mappedResults,
+                'source'  => 'db'
+            ]);
         }
 
-        // Filtrar coincidencias exactas (case-insensitive)
-        $exactMatches = array_filter($candidates, function ($c) use ($validated) {
-            return strcasecmp($c->Name, $validated['character_name']) === 0;
-        });
+        // 2. Si no está en DB, buscar en la API
+        try {
+            $candidates = $this->api->searchCharacter($validated['character_name']);
+            
+            if (empty($candidates)) {
+                return response()->json(['success' => false, 'reason' => "No se encontró a **{$validated['character_name']}**."], 200);
+            }
 
-        // Si no hay coincidencias exactas, devolver todas las parciales
-        $results = !empty($exactMatches) ? array_values($exactMatches) : $candidates;
+            $exactMatches = array_filter($candidates, fn ($c) => strcasecmp($c->Name, $validated['character_name']) === 0);
+            $results = !empty($exactMatches) ? array_values($exactMatches) : $candidates;
 
-        return response()->json([
-            'success' => true,
-            'count'   => count($results),
-            'players' => array_map(function ($p) {
-                return [
-                    'id'         => $p->Id,
-                    'name'       => $p->Name,
-                    'guild_id'   => $p->GuildId,
-                    'guild_name' => $p->GuildName,
-                    'alliance_id' => $p->AllianceId,
-                    'alliance_name' => $p->AllianceName,
-                    'kill_fame'  => $p->KillFame,
-                    'death_fame' => $p->DeathFame,
-                    'avatar'     => $p->Avatar,
-                ];
-            }, $results),
-        ]);
+            return response()->json([
+                'success' => true,
+                'count'   => count($results),
+                'players' => $results,
+                'source'  => 'api'
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false, 
+                'reason'  => 'Albion está experimentando problemas. Solo puedes buscar personajes ya registrados en la web.'
+            ], 200);
+        }
     }
 
+    // ================================================================
+    //                     HELPERS DE RESOLUCIÓN (DB-FIRST)
+    // ================================================================
+
     /**
-     * GET /api/bot/members/{discord_user_id}/balance
-     *
-     * Devuelve el saldo personal del personaje vinculado a un discord_user_id.
-     * Un solo query con `withSum` para ingresos/egresos filtrados.
+     * Resuelve un personaje por ID usando DB-First con 24h de validez.
      */
-    public function balance(string $discordUserId): JsonResponse
+    private function resolveCharacterById(string $id, string &$dataSource): ?object
     {
-        $personaje = Personaje::where('discord_user_id', $discordUserId)
-            ->withSum(
-                ['movimientosBancarios as ingresos' => fn ($q) => $q->where('tipo', 'ingreso')],
-                'monto'
-            )
-            ->withSum(
-                ['movimientosBancarios as egresos' => fn ($q) => $q->where('tipo', 'egreso')],
-                'monto'
-            )
-            ->first();
+        $dbChar = Personaje::where('Id_albion', $id)->first();
 
-        if (!$personaje) {
-            return response()->json([
-                'success' => false,
-                'reason'  => 'Este usuario no tiene un personaje vinculado. '
-                    . 'Usa `/register start` primero.',
-            ], 200);
+        // Si está en DB y fue verificado en las últimas 24h, confiamos en DB
+        if ($dbChar && $dbChar->last_verified_at && $dbChar->last_verified_at->diffInHours(now()) < 24) {
+            $dataSource = 'db';
+            return (object) [
+                'Id' => $dbChar->Id_albion,
+                'Name' => $dbChar->Name,
+                'GuildId' => $dbChar->GuildId,
+                'GuildName' => null,
+            ];
         }
 
-        $ingresos = (int) ($personaje->ingresos ?? 0);
-        $egresos  = (int) ($personaje->egresos ?? 0);
+        // Si no está, o es viejo, consultar la API
+        try {
+            $apiChar = $this->api->getCharacter($id);
+            if ($apiChar) {
+                $dataSource = 'api';
+                return $apiChar;
+            }
+        } catch (\Exception $e) {
+            // Si la API falla, y teníamos algo en DB, usamos el fallback
+            if ($dbChar) {
+                $dataSource = 'db_fallback';
+                return (object) [
+                    'Id' => $dbChar->Id_albion,
+                    'Name' => $dbChar->Name,
+                    'GuildId' => $dbChar->GuildId,
+                    'GuildName' => null,
+                ];
+            }
+            // Si no había nada, propagamos el error
+            throw $e;
+        }
 
-        return response()->json([
-            'success'         => true,
-            'discord_user_id' => $discordUserId,
-            'personaje_name'  => $personaje->Name,
-            'balance'         => $ingresos - $egresos,
-            'ingresos'        => $ingresos,
-            'egresos'         => $egresos,
-        ]);
+        return null;
+    }
+
+    /**
+     * Resuelve un personaje por Nombre usando DB-First.
+     */
+    private function resolveCharacterByName(string $name, string &$dataSource): object|array
+    {
+        // 1. Buscar en DB
+        $dbChar = Personaje::where('Name', $name)->first();
+        if ($dbChar) {
+            $dataSource = 'db';
+            return (object) [
+                'Id' => $dbChar->Id_albion,
+                'Name' => $dbChar->Name,
+                'GuildId' => $dbChar->GuildId,
+                'GuildName' => null,
+            ];
+        }
+
+        // 2. Buscar en API
+        try {
+            $candidates = $this->api->searchCharacter($name);
+            if (empty($candidates)) {
+                return ['error' => ['success' => false, 'reason' => "No se encontró el personaje **{$name}**."]];
+            }
+
+            $exactMatches = array_values(array_filter($candidates, fn ($c) => strcasecmp($c->Name, $name) === 0));
+
+            if (count($exactMatches) > 1) {
+                return ['error' => [
+                    'success' => false,
+                    'ambiguous' => true,
+                    'reason' => "Se encontraron " . count($exactMatches) . " personajes con ese nombre. Usa `/register search`."
+                ]];
+            }
+
+            if (count($exactMatches) === 1) {
+                $dataSource = 'api';
+                return $exactMatches[0];
+            }
+
+            return ['error' => ['success' => false, 'reason' => "No hay coincidencia exacta para **{$name}**."]];
+
+        } catch (\Exception $e) {
+            return ['error' => ['success' => false, 'reason' => $e->getMessage()]];
+        }
     }
 
     // ================================================================
-    //                     HELPERS INTERNOS
+    //                     HELPERS INTERNOS ORIGINALES
     // ================================================================
 
-    /**
-     * Decisión INDIVIDUAL de un personaje (sin considerar otros personajes
-     * del mismo usuario). Devuelve también el allied_guild_id a persistir.
-     */
+    private function rejected(string $reason): JsonResponse
+    {
+        return response()->json([
+            'success'  => false,
+            'decision' => 'rejected',
+            'reason'   => $reason,
+        ], 200);
+    }
+
     private function resolveIndividualDecision(object $character): array
     {
         $linhirGuildId = config('app.linhir_gremio_id');
         $guildId       = $character->GuildId ?? null;
 
         if ($guildId && $guildId === $linhirGuildId) {
-            return [
-                'decision'        => 'member',
-                'allied_guild_id' => null,
-            ];
+            return ['decision' => 'member', 'allied_guild_id' => null];
         }
 
         if ($guildId) {
-            $allied = AlliedGuild::where('guild_id', $guildId)
-                ->where('active', true)
-                ->whereNotNull('tag')
-                ->whereNotNull('discord_role_id')
-                ->first();
-
+            $allied = AlliedGuild::where('guild_id', $guildId)->where('active', true)->whereNotNull('tag')->whereNotNull('discord_role_id')->first();
             if ($allied) {
-                return [
-                    'decision'        => 'allied',
-                    'allied_guild_id' => $allied->id,
-                ];
+                return ['decision' => 'allied', 'allied_guild_id' => $allied->id];
             }
         }
 
-        return [
-            'decision'        => 'public',
-            'allied_guild_id' => null,
-        ];
+        return ['decision' => 'public', 'allied_guild_id' => null];
     }
 
-    /**
-     * Decisión EFECTIVA del usuario (considerando todos sus personajes).
-     *
-     * Prioridad: member > allied > public
-     */
     private function resolveEffectiveDecision(string $discordUserId): array
     {
         $linhirGuildId = config('app.linhir_gremio_id');
+        $personajes = Personaje::with('alliedGuild')->where('discord_user_id', $discordUserId)->get();
 
-        $personajes = Personaje::with('alliedGuild')
-            ->where('discord_user_id', $discordUserId)
-            ->get();
+        if ($personajes->isEmpty()) return ['decision' => 'public', 'allied_guild' => null];
 
-        if ($personajes->isEmpty()) {
-            return ['decision' => 'public', 'allied_guild' => null];
-        }
-
-        // 1. ¿Alguno es miembro de Linhir?
         $hasMember = $personajes->contains(fn($p) => $p->GuildId === $linhirGuildId);
-        if ($hasMember) {
-            return ['decision' => 'member', 'allied_guild' => null];
-        }
+        if ($hasMember) return ['decision' => 'member', 'allied_guild' => null];
 
-        // 2. ¿Alguno está en un aliado activo? Elige el más reciente.
-        $bestAllied = $personajes
-            ->filter(fn($p) => $p->alliedGuild !== null)
-            ->sortByDesc('updated_at')
-            ->first();
-
+        $bestAllied = $personajes->filter(fn($p) => $p->alliedGuild !== null)->sortByDesc('updated_at')->first();
         if ($bestAllied && $bestAllied->alliedGuild) {
             $g = $bestAllied->alliedGuild;
             return [
@@ -509,9 +409,6 @@ class IdentityController extends Controller
         return ['decision' => 'public', 'allied_guild' => null];
     }
 
-    /**
-     * Captura el estado previo de un personaje para auditoría.
-     */
     private function capturePreviousState(?Personaje $previous): array
     {
         $state = [
@@ -528,13 +425,9 @@ class IdentityController extends Controller
                 $state['previous_allied_guild_name'] = $prevAllied->guild_name;
             }
         }
-
         return $state;
     }
 
-    /**
-     * ¿El gremio está en allied_guilds pero no configurado/activo?
-     */
     private function isGuildPendingAllied(?string $guildId): bool
     {
         if (!$guildId) return false;
@@ -542,16 +435,10 @@ class IdentityController extends Controller
 
         return AlliedGuild::where('guild_id', $guildId)
             ->where(function ($q) {
-                $q->where('active', false)
-                  ->orWhereNull('tag')
-                  ->orWhereNull('discord_role_id');
-            })
-            ->exists();
+                $q->where('active', false)->orWhereNull('tag')->orWhereNull('discord_role_id');
+            })->exists();
     }
 
-    /**
-     * Mensaje humano según decisión.
-     */
     private function reasonFor(string $decision, object $character): string
     {
         return match ($decision) {
@@ -560,5 +447,4 @@ class IdentityController extends Controller
             default  => "El personaje {$character->Name} no es integrante actual del gremio Linhir.",
         };
     }
-    
 }

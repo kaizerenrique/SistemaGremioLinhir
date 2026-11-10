@@ -71,3 +71,8 @@ Schedule::command(\App\Console\Commands\SendCtaReminders::class)
     ->everyMinute()
     ->withoutOverlapping()
     ->onOneServer();
+
+Schedule::command(\App\Console\Commands\SyncAlliedGuilds::class)
+    ->everySixHours()
+    ->withoutOverlapping()
+    ->onOneServer();
