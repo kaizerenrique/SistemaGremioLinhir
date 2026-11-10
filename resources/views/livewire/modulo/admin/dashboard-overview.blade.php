@@ -122,28 +122,52 @@
     </div>
 
     <!-- ========================================== -->
-    <!-- FILA 3: FLUJO DE MIEMBROS                  -->
+    <!-- FILA 3: FLUJO DE MIEMBROS Y ALIADOS        -->
     <!-- ========================================== -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Últimos en unirse -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Últimos en unirse a Linhir -->
         <div class="bg-base-300 rounded-lg border border-base-300 p-4 shadow-sm">
             <h3 class="text-md font-bold text-success mb-3 border-b border-success/20 pb-2 flex items-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
-                Últimos en unirse a Linhir
+                Nuevos en Linhir
             </h3>
             <ul class="space-y-3">
                 @forelse($recentJoins as $join)
                     <li class="flex justify-between items-center text-sm">
                         <div class="flex items-center gap-2">
-                            <span class="text-content-light font-medium">{{ $join->Name }}</span>
+                            <span class="text-content-light font-medium truncate max-w-[150px]">{{ $join->Name }}</span>
                             @if($join->discord_user_id)
                                 <span title="Vinculado a Discord" class="text-success text-xs">✅</span>
                             @endif
                         </div>
-                        <span class="text-xs text-content-light/50">{{ $join->created_at->diffForHumans() }}</span>
+                        <span class="text-xs text-content-light/50 whitespace-nowrap">{{ $join->created_at->diffForHumans() }}</span>
                     </li>
                 @empty
                     <li class="text-sm text-content-light/50 text-center py-2">No hay registros recientes.</li>
+                @endforelse
+            </ul>
+        </div>
+
+        <!-- Últimos aliados en ingresar -->
+        <div class="bg-base-300 rounded-lg border border-base-300 p-4 shadow-sm">
+            <h3 class="text-md font-bold text-accent mb-3 border-b border-accent/20 pb-2 flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                Nuevos Aliados (HRL)
+            </h3>
+            <ul class="space-y-3">
+                @forelse($recentAlliedJoins as $alliedJoin)
+                    <li class="flex justify-between items-center text-sm">
+                        <div class="flex flex-col min-w-0 pr-2">
+                            <span class="text-content-light font-medium truncate">{{ $alliedJoin->Name }}</span>
+                            <span class="text-xs text-primary/80 truncate">
+                                {{ $alliedJoin->alliedGuild->guild_name ?? 'Gremio Desconocido' }}
+                            </span>
+                        </div>
+                        <span class="text-xs text-content-light/50 whitespace-nowrap">{{ $alliedJoin->created_at->diffForHumans() }}</span>
+                    </li>
+                @empty
+                    <li class="text-sm text-content-light/50 text-center py-2">No hay aliados recientes.</li>
                 @endforelse
             </ul>
         </div>
@@ -152,16 +176,22 @@
         <div class="bg-base-300 rounded-lg border border-base-300 p-4 shadow-sm">
             <h3 class="text-md font-bold text-error mb-3 border-b border-error/20 pb-2 flex items-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6"></path></svg>
-                Últimos en retirarse de Linhir
+                Retiros de Linhir
             </h3>
             <ul class="space-y-3">
                 @forelse($recentLeaves as $leave)
                     <li class="flex justify-between items-center text-sm">
-                        <div class="flex flex-col">
-                            <span class="text-content-light font-medium">{{ $leave->Name }}</span>
-                            <span class="text-xs text-content-light/50">Gremio actual: {{ $leave->GuildId ? 'Otro' : 'Ninguno' }}</span>
+                        <div class="flex flex-col min-w-0 pr-2">
+                            <span class="text-content-light font-medium truncate">{{ $leave->Name }}</span>
+                            <span class="text-xs text-content-light/50 truncate">
+                                @if($leave->GuildId)
+                                    Se unió a otro gremio
+                                @else
+                                    Sin gremio actualmente
+                                @endif
+                            </span>
                         </div>
-                        <span class="text-xs text-content-light/50">{{ $leave->updated_at->diffForHumans() }}</span>
+                        <span class="text-xs text-content-light/50 whitespace-nowrap">{{ $leave->updated_at->diffForHumans() }}</span>
                     </li>
                 @empty
                     <li class="text-sm text-content-light/50 text-center py-2">No hay retiros recientes.</li>

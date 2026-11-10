@@ -41,6 +41,7 @@ class DashboardOverview extends Component
 
     // Flujo de miembros
     public $recentJoins = [];
+    public $recentAlliedJoins = []; 
     public $recentLeaves = [];
 
     // Finanzas semanales
@@ -113,10 +114,28 @@ class DashboardOverview extends Component
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();
+            
+        // NUEVO: Últimos aliados en ingresar (con su relación al gremio)
+        $this->recentAlliedJoins = Personaje::with('alliedGuild')
+            ->whereNotNull('allied_guild_id')
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
 
-        // Para las salidas, buscamos personajes que ya NO son miembros, pero se actualizaron recientemente
+        // Obtener los IDs de los gremios aliados activos para excluirlos
+        $alliedGuildIds = AlliedGuild::where('active', true)->pluck('guild_id')->toArray();
+        $linhirId = config('app.linhir_gremio_id');
+
+        // Para las salidas: personas que NO son miembros, NO son aliados y se actualizaron recientemente
         $this->recentLeaves = Personaje::where('miembro', false)
-            ->where('updated_at', '>=', now()->subDays(15)) // Solo los últimos 15 días
+            ->whereNull('allied_guild_id') // No tiene gremio aliado asignado en la DB
+            ->where(function ($query) use ($alliedGuildIds, $linhirId) {
+                // Su GuildId actual no es de un aliado y tampoco es el de Linhir
+                $query->whereNotIn('GuildId', $alliedGuildIds)
+                      ->where('GuildId', '!=', $linhirId)
+                      ->orWhereNull('GuildId'); // O no tiene gremio
+            })
+            ->where('updated_at', '>=', now()->subDays(30)) // Últimos 30 días
             ->orderBy('updated_at', 'desc')
             ->take(5)
             ->get();
