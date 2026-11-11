@@ -17,25 +17,6 @@ use Illuminate\Support\Facades\Storage;
 use App\Services\Guild\CtaEmbedBuilder;
 use Illuminate\Validation\ValidationException;
 
-/**
- * Crear CTA desde la Web.
- *
- * Flujo:
- *   1. Staff completa el formulario (datos generales + pre-asignación de armas).
- *   2. Al guardar:
- *        a. Se crea la CTA y los `CtaParticipant` (status='confirmed')
- *           en una transacción.
- *        b. Se sube la imagen (si hay) a storage/app/public/ctas/
- *        c. Se publica el embed + botones en Discord vía bot token.
- *        d. Se persisten los IDs de Discord (message_id, channel_id).
- *        e. Se guarda `image_url` en la CTA.
- *
- * Notas:
- *   - Si Discord falla, la CTA queda creada en la web y se puede
- *     re-publicar desde `/ctas/{id}` (botón "Sincronizar Discord").
- *   - Las armas pre-asignadas quedan bloqueadas para usuarios de Discord.
- */
-
 class CreateCta extends Component
 {
     use WithFileUploads;
@@ -51,6 +32,11 @@ class CreateCta extends Component
     public ?int $composition_id = null;
     public int $reminder_minutes = 10;
 
+    // NUEVOS CAMPOS: Visibilidad, Loot y Anuncio
+    public string $visibility = 'linhir'; // 'linhir' o 'alliance'
+    public string $loot_type = 'taxed_split'; // 'taxed_split', 'full_split', 'pro_guild'
+    public string $announce_before = 'now'; // 'now', '15m', '1h', '2h', '1d'
+
     /** Imagen destacada (opcional). */
     public $image = null;
 
@@ -58,13 +44,7 @@ class CreateCta extends Component
     //                        Pre-asignación                               //
     // ------------------------------------------------------------------ //
 
-    /**
-     * Mapa { composition_weapon_id (int) => personaje_id (int|string|null) }
-     * Se carga al seleccionar composición y se envía al guardar.
-     */
     public array $assignments = [];
-
-    /** Filtro de búsqueda para el selector de personajes. */
     public string $search = '';
 
     // ------------------------------------------------------------------ //
@@ -74,20 +54,6 @@ class CreateCta extends Component
     public bool $creating = false;
     public ?string $errorMessage = null;
 
-    // ================================================================== //
-    //                        Reglas y mensajes                            //
-    // ================================================================== //
-
-    /**
-     * Reglas de validación.
-     *
-     * Sobre la imagen:
-     *   - `mimes:` explícito en vez de `image` (evita dependencia de gd
-     *     y da mensajes claros sobre formatos).
-     *   - `max:5120` (5 MB) es la regla Laravel. El límite efectivo depende
-     *     de `upload_max_filesize` / `post_max_size` de PHP — ver
-     *     `php artisan lin:check-uploads`.
-     */
     protected function rules(): array
     {
         return [
@@ -97,6 +63,9 @@ class CreateCta extends Component
             'end_time'         => 'required|date|after:start_time',
             'composition_id'   => 'required|exists:compositions,id',
             'reminder_minutes' => 'required|integer|min:1|max:120',
+            'visibility'       => 'required|in:linhir,alliance',
+            'loot_type'        => 'required|in:taxed_split,full_split,pro_guild',
+            'announce_before'  => 'required|in:now,15m,1h,2h,1d',
             'image'            => 'nullable|file|mimes:jpg,jpeg,png,webp,gif|max:5120',
         ];
     }
@@ -112,49 +81,22 @@ class CreateCta extends Component
             'end_time.after'          => 'La hora de fin debe ser posterior al inicio.',
             'composition_id.required' => 'Debes seleccionar una composición.',
             'composition_id.exists'   => 'La composición no existe.',
-            'reminder_minutes.min'    => 'El recordatorio debe ser al menos 1 minuto.',
-            'reminder_minutes.max'    => 'El recordatorio no puede superar 120 minutos.',
-
-            // Imagen
-            'image.file'      => 'El archivo no se subió correctamente. '
-                               . 'Suele ser por el límite del servidor. '
-                               . 'Ejecuta `php artisan lin:check-uploads`.',
-            'image.mimes'     => 'Formato no soportado. Usa JPG, PNG, WEBP o GIF. '
-                               . '(Los iPhone HEIC no están soportados — conviértelos primero).',
-            'image.max'       => 'La imagen no debe superar 5 MB.',
-            'image.uploaded'  => 'La imagen no se pudo subir. '
-                               . 'Puede que supere el límite del servidor (normalmente 2 MB por defecto). '
-                               . 'Pide a un administrador que ejecute `php artisan lin:check-uploads`.',
+            'visibility.required'     => 'Selecciona la visibilidad.',
+            'loot_type.required'      => 'Selecciona el tipo de botín.',
+            'image.file'              => 'El archivo no se subió correctamente.',
+            'image.mimes'             => 'Formato no soportado. Usa JPG, PNG, WEBP o GIF.',
+            'image.max'               => 'La imagen no debe superar 5 MB.',
         ];
     }
 
-    // ================================================================== //
-    //                              Render                                 //
-    // ================================================================== //
-
     public function render()
     {
-        $compositions = Composition::where('active', true)
-            ->orderBy('name')
-            ->get(['id', 'name']);
+        $compositions = Composition::where('active', true)->orderBy('name')->get(['id', 'name']);
+        $compositionActiva = $this->composition_id ? Composition::with('weapons')->find($this->composition_id) : null;
 
-        $compositionActiva = null;
-        if ($this->composition_id) {
-            $compositionActiva = Composition::with('weapons')
-                ->find($this->composition_id);
-        }
-
-        // Personajes disponibles (miembros activos con Discord vinculado)
-        $personajes = Personaje::where('miembro', true)
-            ->whereNotNull('discord_user_id')
-            ->orderBy('Name')
-            ->get(['id', 'Name', 'discord_user_id']);
-
-        // Filtro de búsqueda
+        $personajes = Personaje::where('miembro', true)->whereNotNull('discord_user_id')->orderBy('Name')->get(['id', 'Name', 'discord_user_id']);
         $search = trim($this->search);
-        $personajesFiltrados = $search === ''
-            ? $personajes
-            : $personajes->filter(fn($p) => stripos($p->Name, $search) !== false)->values();
+        $personajesFiltrados = $search === '' ? $personajes : $personajes->filter(fn($p) => stripos($p->Name, $search) !== false)->values();
 
         return view('livewire.modulo.ctas.create-cta', [
             'compositions'        => $compositions,
@@ -164,64 +106,37 @@ class CreateCta extends Component
         ]);
     }
 
-    // ================================================================== //
-    //                        Reactividad                                  //
-    // ================================================================== //
-
-    /**
-     * Al cambiar la composición, precarga las armas con asignación vacía.
-     */
     public function updatedCompositionId(): void
     {
         $this->assignments = [];
-
-        if (!$this->composition_id) {
-            return;
-        }
+        if (!$this->composition_id) return;
 
         $comp = Composition::with('weapons')->find($this->composition_id);
-        if (!$comp) {
-            return;
-        }
+        if (!$comp) return;
 
         foreach ($comp->weapons as $w) {
             $this->assignments[$w->id] = null;
         }
     }
 
-    // ================================================================== //
-    //                              Guardar                                //
-    // ================================================================== //
+    // Validación reactiva: Si es alianza, forzar full_split
+    public function updatedVisibility($value): void
+    {
+        if ($value === 'alliance') {
+            $this->loot_type = 'full_split';
+        }
+    }
 
-    /**
-     * Flujo completo:
-     *   1. Validar datos generales
-     *   2. Validar asignaciones (al menos 1, sin duplicados, miembros válidos)
-     *   3. Crear CTA + participantes en transacción
-     *   4. Subir imagen (si hay)
-     *   5. Publicar embed en Discord con botones (vía CtaEmbedBuilder)
-     *   6. Guardar IDs de Discord + image_url en la CTA
-     *   7. Redirigir al detalle
-     */
     public function save(DiscordMessageService $discord): void
     {
         $this->errorMessage = null;
 
-        // -----------------------------------------------------------------
-        // 1. Validación general
-        // -----------------------------------------------------------------
         try {
             $this->validate();
         } catch (ValidationException $e) {
-            // Diagnóstico adicional cuando falla la imagen
             if ($e->validator->errors()->has('image')) {
                 Log::warning('CreateCta: validación de imagen falló', [
-                    'errors'         => $e->validator->errors()->get('image'),
-                    'upload_max'     => ini_get('upload_max_filesize'),
-                    'post_max'       => ini_get('post_max_size'),
-                    'has_file_error' => !empty($_FILES['image']['error'] ?? null),
-                    'file_error'     => $_FILES['image']['error'] ?? null,
-                    'file_size'      => $_FILES['image']['size'] ?? null,
+                    'errors' => $e->validator->errors()->get('image'),
                 ]);
             }
             throw $e;
@@ -230,11 +145,22 @@ class CreateCta extends Component
         $start = Carbon::parse($this->start_time)->utc();
         $end   = Carbon::parse($this->end_time)->utc();
 
-        // -----------------------------------------------------------------
-        // 2. Validaciones de asignación
-        // -----------------------------------------------------------------
-        $asignados = array_filter($this->assignments, fn($v) => !empty($v));
+        // Calcular fecha de anuncio
+        $announceAt = match($this->announce_before) {
+            '15m' => $start->copy()->subMinutes(15),
+            '1h'  => $start->copy()->subHour(),
+            '2h'  => $start->copy()->subHours(2),
+            '1d'  => $start->copy()->subDay(),
+            default => now(), // 'now'
+        };
 
+        // Si la fecha de anuncio ya pasó, anunciar inmediatamente
+        if ($announceAt->isPast()) {
+            $announceAt = now();
+        }
+
+        // Validaciones de asignación
+        $asignados = array_filter($this->assignments, fn($v) => !empty($v));
         if (empty($asignados)) {
             $this->addError('assignments', 'Debes asignar al menos un personaje a un arma.');
             return;
@@ -246,13 +172,7 @@ class CreateCta extends Component
             return;
         }
 
-        // Cargar personajes válidos (miembros activos con Discord)
-        $personajes = Personaje::whereIn('id', $personajeIds)
-            ->where('miembro', true)
-            ->whereNotNull('discord_user_id')
-            ->get()
-            ->keyBy('id');
-
+        $personajes = Personaje::whereIn('id', $personajeIds)->where('miembro', true)->whereNotNull('discord_user_id')->get()->keyBy('id');
         if ($personajes->count() !== count(array_unique($personajeIds))) {
             $this->addError('assignments', 'Alguno de los personajes seleccionados no está disponible.');
             return;
@@ -261,36 +181,38 @@ class CreateCta extends Component
         $this->creating = true;
 
         try {
-            // -------------------------------------------------------------
-            // 3. Crear CTA + participantes (transacción)
-            // -------------------------------------------------------------
             $user            = Auth::user();
             $discordProvider = $user->authProviders()->where('provider', 'discord')->first();
+            
+            // Definir el rol según visibilidad
+            $roleId = $this->visibility === 'alliance' 
+                ? config('app.hrl_role_id') 
+                : config('app.linhir_role_id'); // Asegúrate de tener esto en config/app.php
 
-            $cta = DB::transaction(function () use (
-                $start, $end, $discordProvider, $user, $asignados, $personajes
-            ) {
+            $cta = DB::transaction(function () use ($start, $end, $announceAt, $discordProvider, $user, $asignados, $personajes, $roleId) {
                 $cta = Cta::create([
                     'composition_id'        => $this->composition_id,
                     'title'                 => $this->title,
                     'location'              => $this->location,
+                    'visibility'            => $this->visibility,
+                    'loot_type'             => $this->loot_type,
                     'start_time'            => $start,
                     'end_time'              => $end,
                     'reminder_minutes'      => $this->reminder_minutes,
                     'reminder_at'           => $start->copy()->subMinutes($this->reminder_minutes),
+                    'announce_at'           => $announceAt,
+                    'announced'             => false,
                     'status'                => 'scheduled',
                     'paid'                  => false,
-                    'pro_guild'             => false,
+                    'pro_guild'             => ($this->loot_type === 'pro_guild'),
+                    'discord_role_id'       => $roleId,
                     'created_by_discord_id' => $discordProvider?->provider_id ?? (string) $user->id,
                     'created_by_name'       => $user->name,
                 ]);
 
-                // Pre-asignación: crea CtaParticipant confirmados
                 foreach ($asignados as $weaponId => $personajeId) {
                     $p = $personajes->get($personajeId);
-                    if (!$p) {
-                        continue;
-                    }
+                    if (!$p) continue;
 
                     CtaParticipant::create([
                         'cta_id'                => $cta->id,
@@ -306,98 +228,53 @@ class CreateCta extends Component
                 return $cta;
             });
 
-            // -------------------------------------------------------------
-            // 4. Subir imagen (si hay)
-            // -------------------------------------------------------------
+            // Subir imagen
             $imageUrl = null;
             if ($this->image) {
                 $path     = $this->image->store('ctas', 'public');
                 $imageUrl = Storage::disk('public')->url($path);
                 $cta->update(['image_url' => $imageUrl]);
-
-                Log::info('CreateCta: imagen subida', [
-                    'cta_id' => $cta->id,
-                    'path'   => $path,
-                    'url'    => $imageUrl,
-                    'size'   => $this->image->getSize(),
-                ]);
             }
 
-            // -------------------------------------------------------------
-            // 5. Publicar en Discord
-            // -------------------------------------------------------------
-            $cta->load('composition.weapons', 'participants.weapon');
+            // Lógica de publicación en Discord:
+            // Si el anuncio es "ahora", lo publicamos de inmediato y marcamos como anunciado.
+            // Si es diferido, el bot se encargará de publicarlo más tarde.
+            
+            if ($this->announce_before === 'now') {
+                $cta->load('composition.weapons', 'participants.weapon');
+                $channelId = $this->visibility === 'alliance' 
+                    ? config('app.cta_content_channel_id') 
+                    : config('app.cta_announce_channel_id');
 
-            $channelId = config('app.cta_announce_channel_id');
+                if ($channelId) {
+                    $embed   = CtaEmbedBuilder::buildEmbed($cta, $imageUrl);
+                    $buttons = CtaEmbedBuilder::buildButtons($cta);
+                    $payload = ['embeds' => [$embed]];
+                    if (!empty($buttons)) $payload['components'] = $buttons;
 
-            if (empty($channelId)) {
-                Log::warning('CreateCta: CTA creada sin canal de Discord', [
-                    'cta_id' => $cta->id,
-                ]);
-                $this->creating = false;
-                session()->flash(
-                    'warning',
-                    'CTA creada pero sin canal de Discord configurado. '
-                    . 'Añade CTA_ANNOUNCE_CHANNEL_ID en .env y re-publica desde el detalle.'
-                );
-                $this->redirectRoute('ctas.show', ['id' => $cta->id]);
-                return;
+                    $result = $discord->sendMessage($channelId, $payload);
+                    if ($result && !empty($result['id'])) {
+                        $cta->update([
+                            'discord_message_id' => $result['id'],
+                            'discord_channel_id' => $result['channel_id'] ?? $channelId,
+                            'announced'          => true,
+                        ]);
+                    }
+                }
             }
-
-            // Usar el builder compartido
-            $embed   = CtaEmbedBuilder::buildEmbed($cta, $imageUrl);
-            $buttons = CtaEmbedBuilder::buildButtons($cta);
-
-            $payload = ['embeds' => [$embed]];
-            if (!empty($buttons)) {
-                $payload['components'] = $buttons;
-            }
-
-            $result = $discord->sendMessage($channelId, $payload);
-
-            if (!$result || empty($result['id'])) {
-                Log::warning('CreateCta: publicación en Discord fallida', [
-                    'cta_id' => $cta->id,
-                ]);
-                $this->creating = false;
-                session()->flash(
-                    'warning',
-                    'La CTA se guardó correctamente en la web, pero no se pudo '
-                    . 'publicar en Discord. Puedes reintentar desde el detalle.'
-                );
-                $this->redirectRoute('ctas.show', ['id' => $cta->id]);
-                return;
-            }
-
-            // -------------------------------------------------------------
-            // 6. Persistir IDs de Discord
-            // -------------------------------------------------------------
-            $cta->update([
-                'discord_message_id' => $result['id'],
-                'discord_channel_id' => $result['channel_id'] ?? $channelId,
-            ]);
-
-            Log::info('CTA creada desde web y publicada en Discord', [
-                'cta_id'     => $cta->id,
-                'message_id' => $result['id'],
-                'asignados'  => count($asignados),
-                'has_image'  => !empty($imageUrl),
-                'por'        => $user->name,
-            ]);
 
             $this->creating = false;
-            session()->flash('message', 'CTA creada y publicada en Discord correctamente.');
+            
+            $msg = $this->announce_before === 'now' 
+                ? 'CTA creada y publicada en Discord correctamente.' 
+                : 'CTA programada. El bot la anunciará en Discord el ' . $announceAt->format('d/m/Y H:i') . ' UTC.';
+            
+            session()->flash('message', $msg);
             $this->redirectRoute('ctas.show', ['id' => $cta->id]);
 
-        } catch (ValidationException $e) {
-            $this->creating = false;
-            $this->addError('general', collect($e->errors())->flatten()->first());
         } catch (\Throwable $e) {
             $this->creating = false;
-            Log::error('CreateCta: excepción', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
+            Log::error('CreateCta: excepción', ['error' => $e->getMessage()]);
             $this->errorMessage = 'Ocurrió un error al crear la CTA: ' . $e->getMessage();
         }
     }

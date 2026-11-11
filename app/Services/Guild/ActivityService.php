@@ -18,19 +18,20 @@ class ActivityService
     /**
      * Crea y liquida una actividad.
      *
-     * $data debe contener:
-     *   name, start_time, end_time, liquid_silver, items_value (opcional),
-     *   pro_guild (bool), cta_id (opcional),
-     *   registered_by_discord_id, registered_by_name,
-     *   participants: [{discord_user_id, name, percent}, ...]  // requerido si !pro_guild
-     *
-     * @throws ValidationException
+     * @param array $data Debe contener:
+     *   name, start_time, end_time, liquid_silver, items_value,
+     *   loot_type ('full_split'|'taxed_split'|'pro_guild'),
+     *   cta_id (opcional), registered_by_discord_id, registered_by_name,
+     *   participants: [{discord_user_id, name, percent}, ...]
      */
     public function create(array $data): Activity
     {
-        $proGuild = (bool) ($data['pro_guild'] ?? false);
-
-        if (!$proGuild && empty($data['participants'])) {
+        $lootType = $data['loot_type'] ?? ($data['pro_guild'] ?? false ? 'pro_guild' : 'taxed_split');
+        
+        $isProGuild = $lootType === 'pro_guild';
+        $isFullSplit = $lootType === 'full_split';
+        
+        if (!$isProGuild && empty($data['participants'])) {
             throw ValidationException::withMessages([
                 'participants' => 'Debes especificar participantes o marcar pro-gremio.',
             ]);
@@ -47,9 +48,10 @@ class ActivityService
             }
         }
 
-        return DB::transaction(function () use ($data, $proGuild) {
+        return DB::transaction(function () use ($data, $lootType, $isProGuild, $isFullSplit) {
             $liquid = (int) $data['liquid_silver'];
             $items  = (int) ($data['items_value'] ?? 0);
+            $totalBruto = $liquid + $items;
 
             $start = Carbon::parse($data['start_time'])->utc();
             $end   = Carbon::parse($data['end_time'])->utc();
@@ -61,11 +63,9 @@ class ActivityService
             }
 
             // ============================================================
-            // MODO PRO-GREMIO
+            // 1. MODO PRO-GREMIO (Todo va al banco del gremio)
             // ============================================================
-            if ($proGuild) {
-                $totalBruto = $liquid + $items;
-
+            if ($isProGuild) {
                 $activity = Activity::create([
                     'cta_id'                    => $data['cta_id'] ?? null,
                     'name'                      => $data['name'],
@@ -79,6 +79,7 @@ class ActivityService
                     'management_tax_amount'     => 0,
                     'total_distributed'         => 0,
                     'pro_guild'                 => true,
+                    'loot_type'                 => 'pro_guild',
                     'registered_by_discord_id'  => $data['registered_by_discord_id'],
                     'registered_by_name'        => $data['registered_by_name'],
                 ]);
@@ -105,7 +106,7 @@ class ActivityService
             }
 
             // ============================================================
-            // MODO NORMAL (distribución con impuestos)
+            // 2 y 3. MODO NORMAL (Distribución)
             // ============================================================
             $totalPercent = collect($data['participants'])->sum('percent');
             if ($totalPercent <= 0) {
@@ -114,17 +115,28 @@ class ActivityService
                 ]);
             }
 
-            $guildTax      = (float) config('app.guild_tax_rate', 10) / 100;
-            $managementTax = (float) config('app.management_tax_rate', 5) / 100;
+            // Definir tasas según el tipo de loot
+            if ($isFullSplit) {
+                // Alianza: Sin impuestos
+                $guildTax = 0;
+                $managementTax = 0;
+                $totalToDistribute = $totalBruto;
+                $guildTaxAmount = 0;
+                $managementTaxAmount = 0;
+            } else {
+                // Linhir Normal: Con impuestos
+                $guildTax      = (float) config('app.guild_tax_rate', 10) / 100;
+                $managementTax = (float) config('app.management_tax_rate', 5) / 100;
 
-            $silverAfterGuild = $liquid * (1 - $guildTax);
-            $itemsAfterGuild  = $items  * (1 - $guildTax);
-            $itemsAfterMgmt   = $itemsAfterGuild * (1 - $managementTax);
+                $silverAfterGuild = $liquid * (1 - $guildTax);
+                $itemsAfterGuild  = $items  * (1 - $guildTax);
+                $itemsAfterMgmt   = $itemsAfterGuild * (1 - $managementTax);
 
-            $totalToDistribute = (int) ($silverAfterGuild + $itemsAfterMgmt);
+                $totalToDistribute = (int) ($silverAfterGuild + $itemsAfterMgmt);
 
-            $guildTaxAmount      = (int) ($liquid * $guildTax) + (int) ($items * $guildTax);
-            $managementTaxAmount = (int) ($itemsAfterGuild * $managementTax);
+                $guildTaxAmount      = (int) ($liquid * $guildTax) + (int) ($items * $guildTax);
+                $managementTaxAmount = (int) ($itemsAfterGuild * $managementTax);
+            }
 
             $activity = Activity::create([
                 'cta_id'                    => $data['cta_id'] ?? null,
@@ -139,6 +151,7 @@ class ActivityService
                 'management_tax_amount'     => $managementTaxAmount,
                 'total_distributed'         => $totalToDistribute,
                 'pro_guild'                 => false,
+                'loot_type'                 => $lootType,
                 'registered_by_discord_id'  => $data['registered_by_discord_id'],
                 'registered_by_name'        => $data['registered_by_name'],
             ]);
@@ -157,7 +170,9 @@ class ActivityService
                     'share'                 => $share,
                 ]);
 
-                if ($personaje) {
+                // Solo sumamos al banco personal si no es una actividad de la alianza
+                // (Para aliados, esto solo deja registro histórico de que se les pagó)
+                if ($personaje && !$isFullSplit) {
                     BancoGremial::create([
                         'personaje_id'   => $personaje->id,
                         'tipo'           => 'ingreso',
@@ -169,6 +184,7 @@ class ActivityService
                 }
             }
 
+            // Ingresar impuestos al banco del gremio (solo si aplican)
             $impuestosTotales = $guildTaxAmount + $managementTaxAmount;
             if ($impuestosTotales > 0) {
                 $this->bank->register([
@@ -181,7 +197,11 @@ class ActivityService
             }
 
             if (!empty($data['cta_id'])) {
-                Cta::whereKey($data['cta_id'])->update(['paid' => true, 'pro_guild' => false, 'status' => 'completed',]);
+                Cta::whereKey($data['cta_id'])->update([
+                    'paid' => true, 
+                    'pro_guild' => false, 
+                    'status' => 'completed'
+                ]);
             }
 
             return $activity->load('participants');

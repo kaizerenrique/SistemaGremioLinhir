@@ -34,15 +34,25 @@ class CtaService
 
         $reminderMinutes = (int) ($data['reminder_minutes'] ?? 10);
         $reminderAt = $start->copy()->subMinutes($reminderMinutes);
+        
+        // Nuevos campos
+        $visibility = $data['visibility'] ?? 'linhir';
+        $lootType = $data['loot_type'] ?? 'taxed_split';
+        $announceAt = isset($data['announce_at']) ? Carbon::parse($data['announce_at'])->utc() : $start;
+        $announced = $data['announced'] ?? false;
 
         return Cta::create([
             'composition_id'         => $composition->id,
             'title'                  => $data['title'],
             'location'               => $data['location'],
+            'visibility'             => $visibility,
+            'loot_type'              => $lootType,
             'start_time'             => $start,
             'end_time'               => $end,
             'reminder_minutes'       => $reminderMinutes,
             'reminder_at'            => $reminderAt,
+            'announce_at'            => $announceAt,
+            'announced'              => $announced,
             'discord_message_id'     => $data['discord_message_id'] ?? null,
             'discord_channel_id'     => $data['discord_channel_id'] ?? null,
             'discord_event_id'       => $data['discord_event_id'] ?? null,

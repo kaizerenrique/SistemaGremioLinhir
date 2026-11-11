@@ -13,7 +13,8 @@ class Activity extends Model
         'liquid_silver', 'items_value',
         'guild_tax_rate', 'management_tax_rate',
         'guild_tax_amount', 'management_tax_amount', 'total_distributed',
-        'pro_guild', 'registered_by_discord_id', 'registered_by_name',
+        'pro_guild', 'loot_type',
+        'registered_by_discord_id', 'registered_by_name',
     ];
 
     protected $casts = [

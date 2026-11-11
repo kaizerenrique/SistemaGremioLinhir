@@ -10,10 +10,12 @@ class CtaParticipant extends Model
     protected $fillable = [
         'cta_id', 'discord_user_id', 'user_name', 'personaje_id',
         'composition_weapon_id', 'status', 'participation_percent',
+        'voice_seconds', 
     ];
 
     protected $casts = [
         'participation_percent' => 'decimal:2',
+        'voice_seconds'         => 'integer', 
     ];
 
     public function cta(): BelongsTo

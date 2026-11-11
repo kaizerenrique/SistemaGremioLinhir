@@ -13,7 +13,7 @@ class CtaController extends Controller
 {
     public function __construct(private CtaService $service) {}
 
-    /** POST /api/bot/ctas — el bot registra una CTA recién creada en Discord. */
+    /** POST /api/bot/ctas — Crear CTA desde el bot */
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -22,6 +22,10 @@ class CtaController extends Controller
             'location'              => 'required|string|max:120',
             'start_time'            => 'required|date',
             'end_time'              => 'required|date',
+            'visibility'            => 'nullable|in:linhir,alliance',
+            'loot_type'             => 'nullable|in:full_split,taxed_split,pro_guild',
+            'announce_at'           => 'nullable|date',
+            'announced'             => 'nullable|boolean',
             'reminder_minutes'      => 'nullable|integer|min:1|max:120',
             'discord_message_id'    => 'nullable|string',
             'discord_channel_id'    => 'nullable|string',
@@ -44,6 +48,50 @@ class CtaController extends Controller
             'success' => true,
             'cta_id'  => $cta->id,
         ]);
+    }
+
+    /** GET /api/bot/ctas/pending-announcements */
+    public function pendingAnnouncements(): JsonResponse
+    {
+        $ctas = Cta::with('composition:id,name')
+            ->where('announced', false)
+            ->where('announce_at', '<=', now())
+            ->orderBy('announce_at')
+            ->limit(20)
+            ->get();
+
+        return response()->json(['success' => true, 'ctas' => $ctas]);
+    }
+
+    /** POST /api/bot/ctas/{id}/mark-announced */
+    public function markAnnounced(int $id, Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'discord_message_id' => 'required|string',
+            'discord_channel_id' => 'required|string',
+        ]);
+
+        $cta = Cta::find($id);
+        if (!$cta) return response()->json(['success' => false, 'reason' => 'CTA no encontrada.'], 200);
+
+        $cta->update([
+            'announced' => true,
+            'discord_message_id' => $data['discord_message_id'],
+            'discord_channel_id' => $data['discord_channel_id'],
+        ]);
+
+        return response()->json(['success' => true]);
+    }
+
+    /** POST /api/bot/ctas/{id}/voice-channel */
+    public function updateVoiceChannel(int $id, Request $request): JsonResponse
+    {
+        $data = $request->validate(['discord_voice_channel_id' => 'required|string']);
+        $cta = Cta::find($id);
+        if (!$cta) return response()->json(['success' => false, 'reason' => 'CTA no encontrada.'], 200);
+
+        $cta->update(['discord_voice_channel_id' => $data['discord_voice_channel_id']]);
+        return response()->json(['success' => true]);
     }
 
     /** GET /api/bot/ctas/active */

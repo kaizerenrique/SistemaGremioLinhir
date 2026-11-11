@@ -60,6 +60,7 @@ Route::prefix('bot')->middleware(['auth:sanctum', 'ability:read'])->group(functi
         // CTAs
     Route::get ('/ctas/active',             [CtaController::class, 'active']);
     Route::get ('/ctas/pending-reminders',  [CtaController::class, 'pendingReminders']);
+    Route::get ('/ctas/pending-announcements', [CtaController::class, 'pendingAnnouncements']);
     Route::get ('/ctas',                    [CtaController::class, 'index']);
     Route::get ('/ctas/pending-payment',    [CtaController::class, 'pendingPayment']);
     Route::get ('/ctas/{id}',               [CtaController::class, 'show']);
@@ -68,6 +69,8 @@ Route::prefix('bot')->middleware(['auth:sanctum', 'ability:read'])->group(functi
     Route::post('/ctas/{id}/absent',        [CtaController::class, 'absent']);
     Route::post('/ctas/{id}/cancel',        [CtaController::class, 'cancel']);
     Route::post('/ctas/{id}/reminder-sent', [CtaController::class, 'markReminderSent']);
+    Route::post('/ctas/{id}/mark-announced', [CtaController::class, 'markAnnounced']);
+    Route::post('/ctas/{id}/voice-channel',  [CtaController::class, 'updateVoiceChannel']);
 
     // Composiciones
     Route::get   ('/compositions',           [CompositionController::class, 'index']);
