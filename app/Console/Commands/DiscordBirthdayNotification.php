@@ -5,211 +5,200 @@ namespace App\Console\Commands;
 use App\Models\Personaje;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Log;
-use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class DiscordBirthdayNotification extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'discord:birthday-notification
                             {--test : Ejecutar en modo de prueba sin enviar realmente}';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Envía notificaciones de cumpleaños al canal de Discord del gremio usando webhook';
+    protected $description = 'Envía notificaciones de cumpleaños al canal de Discord, diferenciando entre miembros de Linhir y aliados de la HRL';
 
-    /**
-     * Execute the console command.
-     */
-    public function handle()
+    public function handle(): int
     {
         $this->info('🔍 Buscando cumpleaños de hoy...');
-        
-        $today = Carbon::today();
-        $isTestMode = $this->option('test');
-        
-        // Buscar personajes cuyo cumpleaños sea hoy (ignorando el año)
-        $birthdayPeople = Personaje::whereNotNull('birthdate')
+
+        $today      = Carbon::today();
+        $isTestMode = (bool) $this->option('test');
+
+        $birthdayPeople = Personaje::with('alliedGuild')
+            ->whereNotNull('birthdate')
             ->whereMonth('birthdate', $today->month)
             ->whereDay('birthdate', $today->day)
             ->orderBy('Name')
             ->get();
-        
+
         if ($birthdayPeople->isEmpty()) {
             $this->info('✅ No hay cumpleaños hoy.');
             Log::info('No hay cumpleaños hoy.');
-            return;
+            return self::SUCCESS;
         }
-        
-        $this->info('🎂 Encontrados ' . $birthdayPeople->count() . ' cumpleaños.');
-        
-        // Crear el mensaje para Discord (formato webhook)
-        $messageData = $this->createDiscordWebhookMessage($birthdayPeople, $today);
-        
-        // En modo prueba, solo mostraríamos el mensaje
-        if ($isTestMode) {
-            $this->info('🧪 MODO PRUEBA - No se enviará realmente a Discord');
-            $this->info('📝 Mensaje que se enviaría:');
-            $this->info(json_encode($messageData, JSON_PRETTY_PRINT));
-            return;
-        }
-        
-        // Obtener el webhook desde la configuración
+
+        // Separar: miembros de Linhir vs aliados de la HRL
+        $members = $birthdayPeople->filter(fn ($p) => $p->miembro === true);
+        $allies  = $birthdayPeople->filter(
+            fn ($p) => $p->miembro !== true && $p->allied_guild_id !== null
+        );
+
+        $this->info(sprintf(
+            '🎂 Total: %d | Miembros Linhir: %d | Aliados HRL: %d',
+            $birthdayPeople->count(),
+            $members->count(),
+            $allies->count()
+        ));
+
         $webhookUrl = config('app.canal_cumpleanos');
-        
+
         if (!$webhookUrl) {
-            $this->error('❌ Webhook de cumpleaños no configurado. Por favor, establece DISCORD_BIRTHDAY_WEBHOOK_URL en .env');
+            $this->error('❌ Webhook de cumpleaños no configurado. Define DISCORD_BIRTHDAY_WEBHOOK_URL en .env');
             Log::error('Webhook de Discord para cumpleaños no configurado');
+            return self::FAILURE;
+        }
+
+        if ($members->isNotEmpty()) {
+            $this->dispatchGroup($members, $today, 'linhir', $webhookUrl, $isTestMode);
+        }
+
+        if ($allies->isNotEmpty()) {
+            $this->dispatchGroup($allies, $today, 'aliado', $webhookUrl, $isTestMode);
+        }
+
+        return self::SUCCESS;
+    }
+
+    /**
+     * Envía un mensaje webhook para un grupo (miembros o aliados).
+     */
+    private function dispatchGroup(
+        $people,
+        Carbon $today,
+        string $type,
+        string $webhookUrl,
+        bool $isTestMode
+    ): void {
+        $message = $this->buildMessage($people, $today, $type);
+        $label   = $type === 'linhir' ? 'Linhir' : 'Aliados HRL';
+
+        if ($isTestMode) {
+            $this->info("🧪 MODO PRUEBA - Mensaje para {$label}:");
+            $this->line(json_encode(
+                $message,
+                JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+            ));
             return;
         }
-        
-        // Enviar a Discord usando webhook (igual que tu función status_server)
+
         try {
-            $response = $this->sendWebhookMessage($webhookUrl, $messageData);
-            
-            if ($response) {
-                $this->info('✅ Notificación enviada exitosamente a Discord!');
-                Log::info('Notificación de cumpleaños enviada a Discord', [
-                    'cumpleañeros' => $birthdayPeople->pluck('Name')->toArray(),
-                    'fecha' => $today->format('Y-m-d'),
-                    'webhook' => $webhookUrl
+            $response = Http::timeout(15)->post($webhookUrl, $message);
+
+            if ($response->successful()) {
+                $this->info("✅ Notificación de cumpleaños ({$label}) enviada a Discord.");
+                Log::info("Notificación de cumpleaños ({$label}) enviada", [
+                    'cumpleañeros' => $people->pluck('Name')->toArray(),
+                    'fecha'        => $today->format('Y-m-d'),
                 ]);
             } else {
-                $this->error('❌ Error al enviar notificación a Discord');
-                Log::error('Error al enviar notificación de cumpleaños a Discord');
+                $this->error("❌ Error al enviar ({$label}): HTTP {$response->status()}");
+                Log::error("Fallo webhook cumpleaños ({$label})", [
+                    'status' => $response->status(),
+                    'body'   => $response->body(),
+                ]);
             }
-        } catch (\Exception $e) {
-            $this->error('❌ Excepción al enviar a Discord: ' . $e->getMessage());
-            Log::error('Excepción en notificación de cumpleaños', [
+        } catch (\Throwable $e) {
+            $this->error("❌ Excepción al enviar ({$label}): " . $e->getMessage());
+            Log::error("Excepción webhook cumpleaños ({$label})", [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
             ]);
         }
     }
-    
+
     /**
-     * Crear el mensaje embellecido para Discord (formato webhook)
+     * Construye el payload del webhook según el grupo.
+     *
+     * La "imagen" se coloca en el campo `image` del embed (imagen grande
+     * inferior). Si prefieres que sea pequeña arriba a la derecha,
+     * cambia 'image' por 'thumbnail'.
      */
-    private function createDiscordWebhookMessage($birthdayPeople, $today)
+    private function buildMessage($people, Carbon $today, string $type): array
     {
-        $count = $birthdayPeople->count();
-        $escudo = asset('imagenes/linhir_escudo_180.png');
-        $imagendecumpleaños = asset('imagenes/birthday-cake.mp4');
-        $mentionRole = config('app.birthday_mention_role', '@everyone');
-        
-        $title = $count === 1 
-            ? "🎉 ¡HOY ES EL CUMPLEAÑOS DE UN MIEMBRO DEL GREMIO! 🎂" 
-            : "🎉 ¡HOY ES EL CUMPLEAÑOS DE {$count} MIEMBROS DEL GREMIO! 🎂";
-        
-        // Construir descripción con información de cada cumpleañero
-        $description = "## 🎈 CUMPLEAÑEROS DEL DÍA:\n\n";
-        
-        foreach ($birthdayPeople as $personaje) {
+        $count   = $people->count();
+        $escudo  = asset('imagenes/linhir_escudo_180.png');
+        $mention = config('app.birthday_mention_role', '@everyone');
+
+        // ---- Configuración según el grupo --------------------------------
+        if ($type === 'linhir') {
+            $image      = asset('imagenes/cumpleaños/Gremio_Linhir.png');
+            $color      = 0xC54B47;   // primary de Linhir
+            $username   = 'Linhir - Cumpleaños';
+            $titleEmoji = '⚔️';
+            $groupLabel = 'Miembro de Linhir';
+            $groupBadge = '🎖️ Miembro del Gremio';
+        } else {
+            $image      = asset('imagenes/cumpleaños/Alianza.png');
+            $color      = 0xD4B44A;   // accent (dorado aliados)
+            $username   = 'Linhir - Aliados HRL';
+            $titleEmoji = '🤝';
+            $groupLabel = 'Aliado de la HRL';
+            $groupBadge = '🌟 Aliado del Gremio';
+        }
+
+        $title = $count === 1
+            ? "{$titleEmoji} ¡FELIZ CUMPLEAÑOS, {$groupLabel}!"
+            : "{$titleEmoji} ¡{$count} CUMPLEAÑOS DE {$groupLabel}S HOY!";
+
+        // ---- Descripción con nombres grandes -----------------------------
+        // Discord renderiza "# Nombre" como H1 (tamaño máximo).
+        $description = "## 🎈 ¡HOY CELEBRAMOS!\n\n";
+
+        foreach ($people as $personaje) {
             $birthdate = Carbon::parse($personaje->birthdate);
-            
-            
-            $description .= "**👤 {$personaje->Name}**\n";    
-            
-            $description .= "🗓️ **Fecha:** " . $birthdate->format('d/m') . "\n";
-            
-            // Separador entre personas
-            $description .= "━━━━━━━━━━━━━━━━━━\n";
-        }
-        
-        // Color según la cantidad de cumpleañeros
-        $color = $count === 1 ? 5763719 : 15844367; // Verde o dorado
-        
-        return [
-            "username" => "Linhir - Sistema de Cumpleaños",
-            "avatar_url" => $escudo,
-            "content" => $mentionRole, // Menciona a todos
-            "embeds" => [
-                [
-                    "title" => $title,
-                    "color" => $color,
-                    "thumbnail" => [
-                        "url" => $imagendecumpleaños // Icono de pastel
-                    ],
-                    "description" => $description,
-                    "fields" => [
-                        [
-                            "name" => "🎁 MENSAJE DEL GREMIO",
-                            "value" => "¡Que tengas un día maravilloso lleno de alegría, éxitos y muchas bendiciones! 🥳✨",
-                            "inline" => false
-                        ],
-                        [
-                            "name" => "📣 SALUDOS",
-                            "value" => "¡Deja tus buenos deseos en el chat! 🎊",
-                            "inline" => false
-                        ]
-                    ],
-                    "footer" => [
-                        "text" => "Linhir System • Sistema de Cumpleaños • " . $today->format('d/m/Y'),
-                        "icon_url" => $escudo
-                    ],
-                    "timestamp" => $today->toISOString()
-                ]
-            ]
-        ];
-    }
-    
-    /**
-     * Enviar mensaje usando webhook (igual que tu función status_server)
-     */
-    private function sendWebhookMessage($webhookUrl, $messageData)
-    {
-        try {
-            $client = new Client();
-            
-            $response = $client->post($webhookUrl, [
-                'json' => $messageData,
-                'headers' => [
-                    'Content-Type' => 'application/json',
-                ],
-                'verify' => false, // Solo si tienes problemas con SSL
-            ]);
-            
-            return $response->getBody();
-        } catch (\GuzzleHttp\Exception\ClientException $e) {
-            Log::error('ClientException al enviar webhook: ' . $e->getMessage());
-            $this->error('Error de cliente: ' . $e->getMessage());
-            return false;
-        } catch (\GuzzleHttp\Exception\ServerException $e) {
-            Log::error('ServerException al enviar webhook: ' . $e->getMessage());
-            $this->error('Error del servidor: ' . $e->getMessage());
-            return false;
-        } catch (\Exception $e) {
-            Log::error('Excepción al enviar webhook: ' . $e->getMessage());
-            $this->error('Excepción: ' . $e->getMessage());
-            return false;
-        }
-    }
-    
-    /**
-     * Método alternativo usando Laravel Http (más simple)
-     */
-    private function sendWebhookMessageSimple($webhookUrl, $messageData)
-    {
-        try {
-            $response = Http::post($webhookUrl, $messageData);
-            
-            if ($response->successful()) {
-                return true;
-            } else {
-                Log::error('Error en webhook: ' . $response->status() . ' - ' . $response->body());
-                return false;
+
+            // Nombre en H1 = el tamaño más grande posible en Discord
+            $description .= "# 🎂 {$personaje->Name}\n";
+
+            // Línea secundaria (subtexto, tamaño reducido)
+            $extras = [
+                '📅 ' . $birthdate->format('d/m'),
+                $groupBadge,
+            ];
+
+            if ($type === 'aliado' && $personaje->alliedGuild) {
+                $extras[] = '🏛️ ' . $personaje->alliedGuild->guild_name;
             }
-        } catch (\Exception $e) {
-            Log::error('Excepción en webhook: ' . $e->getMessage());
-            return false;
+
+            $description .= '-# ' . implode(' · ', $extras) . "\n\n";
+            $description .= "━━━━━━━━━━━━━━━━━━\n\n";
         }
+
+        // Discord: descripción máximo 4096 caracteres
+        if (mb_strlen($description) > 4000) {
+            $description = mb_substr($description, 0, 3900)
+                         . "\n\n-# …y más cumpleañeros hoy.";
+        }
+
+        return [
+            'username'   => $username,
+            'avatar_url' => $escudo,
+            'content'    => $mention,
+            'embeds'     => [[
+                'title'       => $title,
+                'color'       => $color,
+                'image'       => ['url' => $image],   // imagen grande inferior
+                'description' => $description,
+                'fields'      => [
+                    [
+                        'name'   => '🎁 MENSAJE DEL GREMIO',
+                        'value'  => '¡Que tengas un día maravilloso lleno de alegría, éxitos y muchas bendiciones! 🥳✨',
+                        'inline' => false,
+                    ],
+                ],
+                'footer' => [
+                    'text'     => 'Linhir System • Cumpleaños • ' . $today->format('d/m/Y'),
+                    'icon_url' => $escudo,
+                ],
+                'timestamp' => $today->toIso8601String(),
+            ]],
+        ];
     }
 }
