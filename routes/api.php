@@ -63,6 +63,8 @@ Route::prefix('bot')->middleware(['auth:sanctum', 'ability:read'])->group(functi
     Route::get ('/ctas/pending-announcements', [CtaController::class, 'pendingAnnouncements']);
     Route::get ('/ctas',                    [CtaController::class, 'index']);
     Route::get ('/ctas/pending-payment',    [CtaController::class, 'pendingPayment']);
+    Route::get ('/ctas/voice-channels',      [CtaController::class, 'voiceChannels']);
+    Route::post('/ctas/{id}/clear-voice-channel', [CtaController::class, 'clearVoiceChannel']);
     Route::get ('/ctas/{id}',               [CtaController::class, 'show']);
     Route::post('/ctas',                    [CtaController::class, 'store']);
     Route::post('/ctas/{id}/join',          [CtaController::class, 'join']);

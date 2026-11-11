@@ -302,4 +302,45 @@ class CtaController extends Controller
 
         return response()->json(['success' => true]);
     }
+
+    /**
+     * GET /api/bot/ctas/voice-channels
+     *
+     * Devuelve TODAS las CTAs que tienen un canal de voz asociado,
+     * sin importar su status ni fecha. Usado por empty_channel_cleanup_loop.
+     */
+    public function voiceChannels(): JsonResponse
+    {
+        $ctas = Cta::whereNotNull('discord_voice_channel_id')
+            ->orderBy('start_time')
+            ->get([
+                'id',
+                'title',
+                'status',
+                'start_time',
+                'end_time',
+                'discord_voice_channel_id',
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'ctas'    => $ctas,
+        ]);
+    }
+
+    /**
+     * POST /api/bot/ctas/{id}/clear-voice-channel
+     *
+     * Limpia el discord_voice_channel_id (tras borrar el canal en Discord).
+     */
+    public function clearVoiceChannel(int $id): JsonResponse
+    {
+        $cta = Cta::find($id);
+        if (!$cta) {
+            return response()->json(['success' => false, 'reason' => 'CTA no encontrada.'], 200);
+        }
+
+        $cta->update(['discord_voice_channel_id' => null]);
+        return response()->json(['success' => true]);
+    }
 }
