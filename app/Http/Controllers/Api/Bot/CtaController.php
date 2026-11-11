@@ -273,4 +273,19 @@ class CtaController extends Controller
 
         return response()->json(['success' => false, 'reason' => 'Participante no encontrado.'], 200);
     }
+
+    public function updateAnnounceTime(int $id, Request $request): JsonResponse
+    {
+        $data = $request->validate(['announce_at' => 'required|date']);
+        $cta = Cta::find($id);
+        
+        if (!$cta) return response()->json(['success' => false, 'reason' => 'CTA no encontrada.'], 200);
+
+        $cta->update([
+            'announce_at' => $data['announce_at'],
+            'announced' => false, // Aseguramos que el loop lo detecte
+        ]);
+
+        return response()->json(['success' => true]);
+    }
 }
