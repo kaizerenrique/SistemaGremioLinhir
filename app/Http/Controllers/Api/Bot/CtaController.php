@@ -253,4 +253,24 @@ class CtaController extends Controller
             'ctas'    => $ctas,
         ]);
     }
+
+    /** POST /api/bot/ctas/{id}/voice-time */
+    public function addVoiceTime(int $id, Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'discord_user_id' => 'required|string',
+            'seconds'         => 'required|integer|min:1',
+        ]);
+
+        $participant = \App\Models\CtaParticipant::where('cta_id', $id)
+            ->where('discord_user_id', $data['discord_user_id'])
+            ->first();
+
+        if ($participant) {
+            $participant->increment('voice_seconds', $data['seconds']);
+            return response()->json(['success' => true]);
+        }
+
+        return response()->json(['success' => false, 'reason' => 'Participante no encontrado.'], 200);
+    }
 }

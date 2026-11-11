@@ -71,6 +71,7 @@ Route::prefix('bot')->middleware(['auth:sanctum', 'ability:read'])->group(functi
     Route::post('/ctas/{id}/reminder-sent', [CtaController::class, 'markReminderSent']);
     Route::post('/ctas/{id}/mark-announced', [CtaController::class, 'markAnnounced']);
     Route::post('/ctas/{id}/voice-channel',  [CtaController::class, 'updateVoiceChannel']);
+    Route::post('/ctas/{id}/voice-time',    [CtaController::class, 'addVoiceTime']); // NUEVA
 
     // Composiciones
     Route::get   ('/compositions',           [CompositionController::class, 'index']);
