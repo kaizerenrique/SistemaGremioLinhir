@@ -101,9 +101,20 @@ class CtaController extends Controller
             ->where('status', 'scheduled')
             ->where('start_time', '>', now())
             ->orderBy('start_time')
-            ->get(['id', 'title', 'location', 'start_time', 'end_time',
-                   'composition_id', 'discord_message_id', 'discord_channel_id',
-                   'discord_event_id', 'discord_role_id']);
+            ->get([
+                'id',
+                'title',
+                'location',
+                'visibility',
+                'start_time',
+                'end_time',
+                'composition_id',
+                'discord_message_id',
+                'discord_channel_id',
+                'discord_voice_channel_id',
+                'discord_event_id',
+                'discord_role_id'
+            ]);
 
         return response()->json(['success' => true, 'ctas' => $ctas]);
     }
@@ -134,7 +145,10 @@ class CtaController extends Controller
 
         try {
             $p = $this->service->join(
-                $id, $data['discord_user_id'], $data['user_name'], $data['weapon_id']
+                $id,
+                $data['discord_user_id'],
+                $data['user_name'],
+                $data['weapon_id']
             );
         } catch (ValidationException $e) {
             return response()->json([
@@ -200,7 +214,7 @@ class CtaController extends Controller
 
         $query = Cta::with('composition:id,name')
             ->withCount([
-                'participants as confirmed_count' => fn ($q) => $q->where('status', 'confirmed'),
+                'participants as confirmed_count' => fn($q) => $q->where('status', 'confirmed'),
             ]);
 
         if (!empty($data['status'])) {
@@ -238,7 +252,7 @@ class CtaController extends Controller
     {
         $ctas = Cta::with('composition:id,name')
             ->withCount([
-                'participants as confirmed_count' => fn ($q) => $q->where('status', 'confirmed'),
+                'participants as confirmed_count' => fn($q) => $q->where('status', 'confirmed'),
             ])
             ->where('status', 'scheduled')
             ->where('paid', false)
@@ -278,7 +292,7 @@ class CtaController extends Controller
     {
         $data = $request->validate(['announce_at' => 'required|date']);
         $cta = Cta::find($id);
-        
+
         if (!$cta) return response()->json(['success' => false, 'reason' => 'CTA no encontrada.'], 200);
 
         $cta->update([
