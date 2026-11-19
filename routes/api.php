@@ -101,34 +101,3 @@ Route::prefix('bot')->middleware(['auth:sanctum', 'ability:read'])->group(functi
     Route::get('/guild-transactions', [GuildBankController::class, 'index']);
 });
 
-
-//prueba api IA
-Route::get('/ollama', [OllamaController::class, 'index'])->middleware('auth:sanctum');
-
-// Rutas para el bot de Discord de Linhir
-
-Route::prefix('bot')->middleware('auth:sanctum')->group(function () {
-    // Tasks
-    Route::get('/tasks', [TaskController::class, 'index']);
-    Route::post('/tasks', [TaskController::class, 'store']);
-    Route::get('/tasks/{id}', [TaskController::class, 'show']);
-    Route::put('/tasks/{id}', [TaskController::class, 'update']);
-    Route::delete('/tasks/{id}', [TaskController::class, 'destroy']);
-    Route::patch('/tasks/{id}/activate', [TaskController::class, 'activate']);
-
-    // Reports
-    Route::get('/reports/pending', [ReportController::class, 'pending']);
-    Route::post('/reports', [ReportController::class, 'store']);
-    Route::get('/reports/{id}', [ReportController::class, 'show']);
-    Route::put('/reports/{id}/approve', [ReportController::class, 'approve']);
-    Route::put('/reports/{id}/reject', [ReportController::class, 'reject']);
-
-    // Points
-    Route::get('/ranking', [PointController::class, 'ranking']);
-    Route::get('/points/all', [PointController::class, 'allUsers']);
-    Route::get('/points/{discord_user_id}', [PointController::class, 'show']);
-    Route::get('/points/history/{discord_user_id}', [PointController::class, 'history']);
-    Route::post('/points/add', [PointController::class, 'add']);
-    Route::post('/points/spend', [PointController::class, 'spend']);
-
-});
